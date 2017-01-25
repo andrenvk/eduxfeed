@@ -1,5 +1,6 @@
 import sys
 import os.path
+import datetime
 import configparser
 
 import requests
@@ -7,16 +8,24 @@ from bs4 import BeautifulSoup
 
 
 def main():
-    sess = edux_session(*edux_config())
+    sess = session_kosapi(*auth())
+    
+    # TODO test edux
+    # sess = session_kosapi(*auth())
     # print(sess.get('https://edux.fit.cvut.cz/courses/BI-ZUM/feed.php').text)
 
+    # TODO test kosapi
+    # sess, exp = session_kosapi(*auth(section='kosapi'))
+    # r = sess.get("https://kosapi.fit.cvut.cz/api/3/courses/MI-MVI.16/parallels?sem=B161&limit=25&access_token=52a6a7da-447b-477c-9298-48e81baacae0")
+    # print(r.request.headers)
+    
 
-def edux_config(auth_file='./auth.cfg', debug=True):
+def auth(auth_file='./auth.cfg', section='edux', debug=True):
     config = configparser.ConfigParser()
     try:
         config.read(auth_file)
-        username = config['edux']['username']
-        password = config['edux']['password']
+        username = config[section]['username']
+        password = config[section]['password']
     except:
         print('Config file error.', file=sys.stderr)
         with open(os.path.join(os.path.dirname(__file__), 'auth.cfg.sample')) as f:
@@ -30,8 +39,8 @@ def edux_config(auth_file='./auth.cfg', debug=True):
     return username, password
 
 
-def edux_session(username, password):
-    LOGIN = 'https://edux.fit.cvut.cz/start?do=login'
+def session_edux(username, password):
+    url = 'https://edux.fit.cvut.cz/start?do=login'
     session = requests.Session()
 
     def get_formdata(html):
@@ -45,26 +54,52 @@ def edux_session(username, password):
 
     try:
         # 1] get login page
-        r = session.get(LOGIN)
+        r = session.get(url)
         r.raise_for_status()
 
         # 2] select local auth
         formdata = get_formdata(r.text)
         formdata['authnProvider'] = '1'
-        r = session.post(LOGIN, data=formdata)
+        r = session.post(url, data=formdata)
         r.raise_for_status()
 
         # 3] login with username and password
         formdata = get_formdata(r.text)
         formdata['u'] = username
         formdata['p'] = password
-        r = session.post(LOGIN, data=formdata)
+        r = session.post(url, data=formdata)
         r.raise_for_status()
     except:
         # TODO bad login does not raise exception
+        # TODO debug ~ raise ~ msg
         raise
-    else:
-        return session
+
+    return session
+
+
+def session_kosapi(username, password):
+    url = 'https://auth.fit.cvut.cz/oauth/oauth/token'
+    session = requests.Session()
+
+    formdata = {
+        'client_id': username,
+        'client_secret': password,
+        'scope': 'cvut:kosapi:read',
+        'grant_type': 'client_credentials',
+    }
+
+    try:
+        r = session.post(url, data=formdata)
+        r.raise_for_status()
+    except:
+        # TODO bad auth
+        raise
+
+    response = r.json()
+    session.headers['Authorization'] = 'Bearer {}'.format(response['access_token'])
+    expiration = datetime.datetime.now() + datetime.timedelta(seconds=response['expires_in'] - 60)
+
+    return session, expiration
 
 
 if __name__ == '__main__':
