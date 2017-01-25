@@ -8,8 +8,13 @@ from bs4 import BeautifulSoup
 
 
 def main():
-    sess = session_kosapi(*auth())
+    username, password = auth()
+    sess = session_edux(username, password)
     
+    # TODO update session
+    # kosapi - expiration time
+    # edux - check if still auth'd
+
     # TODO test edux
     # sess = session_kosapi(*auth())
     # print(sess.get('https://edux.fit.cvut.cz/courses/BI-ZUM/feed.php').text)
