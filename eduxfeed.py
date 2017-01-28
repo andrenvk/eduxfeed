@@ -132,5 +132,28 @@ def user_courses(sess):
     return courses
 
 
+def edux_courses():
+    # must not be authenticated!
+    url = 'https://edux.fit.cvut.cz/'
+    r = requests.get(url)
+    parser = BeautifulSoup(r.text, "html.parser")
+
+    courses = {}
+    for courselist in parser.find_all('div', {'class': 'courselist_field'}):
+        table = courselist.table
+        if table is not None:
+            for course in table.find_all('a'):
+                code = course.text.strip()
+                # no BIK- subjects and alike / TV course (if applicable)
+                if re.match('[^-]+K-', code) or not re.search('-', code):
+                    continue
+                try:
+                    courses[code.split('-')[0]].append(code)
+                except:
+                    courses[code.split('-')[0]] = [code]
+
+    return courses
+
+
 if __name__ == '__main__':
     main()
