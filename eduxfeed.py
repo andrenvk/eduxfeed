@@ -1,16 +1,21 @@
+import re
 import sys
 import os.path
 import datetime
 import configparser
 
+# import lxml
 import requests
 from bs4 import BeautifulSoup
 
+KOSAPI = 'https://kosapi.fit.cvut.cz/api/3'
+
 
 def main():
-    username, password = auth()
-    sess = session_edux(username, password)
-    
+    username, password = auth(target='kosapi')
+    sess, exp = session_kosapi(username, password)
+    user_get_subjects(sess)
+
     # TODO update session
     # kosapi - expiration time
     # edux - check if still auth'd
@@ -21,16 +26,17 @@ def main():
 
     # TODO test kosapi
     # sess, exp = session_kosapi(*auth(section='kosapi'))
-    # r = sess.get("https://kosapi.fit.cvut.cz/api/3/courses/MI-MVI.16/parallels?sem=B161&limit=25&access_token=52a6a7da-447b-477c-9298-48e81baacae0")
+    # r = sess.get("https://kosapi.fit.cvut.cz/api/3/courses/MI-MVI.16/parallels" +
+    #              "?sem=B161&limit=25&access_token=52a6a7da-447b-477c-9298-48e81baacae0")
     # print(r.request.headers)
-    
 
-def auth(auth_file='./auth.cfg', section='edux', debug=True):
+
+def auth(auth_file='./auth.cfg', target='edux', debug=True):
     config = configparser.ConfigParser()
     try:
         config.read(auth_file)
-        username = config[section]['username']
-        password = config[section]['password']
+        username = config[target]['username']
+        password = config[target]['password']
     except:
         print('Config file error.', file=sys.stderr)
         with open(os.path.join(os.path.dirname(__file__), 'auth.cfg.sample')) as f:
@@ -105,6 +111,25 @@ def session_kosapi(username, password):
     expiration = datetime.datetime.now() + datetime.timedelta(seconds=response['expires_in'] - 60)
 
     return session, expiration
+
+
+def user_username():
+    pass
+
+
+def user_courses(sess):
+    username = 'novako20' # user_username()
+    r = sess.get(KOSAPI + '/students/{}/enrolledCourses'.format(username))
+    # TODO tutorial error -- POST method error 405 Not Allowed
+    # https://auth.fit.cvut.cz/manager/app-types.xhtml#service-account
+    parser = BeautifulSoup(r.text, "lxml-xml")
+
+    courses = {}
+    for course in parser.find_all('course'):
+        code = re.sub('^.+/', '', course.get('xlink:href').rstrip('/'))
+        courses[code] = course.text
+
+    return courses
 
 
 if __name__ == '__main__':

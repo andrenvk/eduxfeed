@@ -1,3 +1,7 @@
 [edux]
 username = novako20
 password = pa$$word
+
+[kosapi]
+username = <client_id>
+password = <client_secret>
