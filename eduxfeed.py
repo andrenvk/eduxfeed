@@ -53,7 +53,6 @@ def main():
 
 
 @app.route('/')
-@app.errorhandler(404)
 def index():
     return render_template('oauth.html', url=url_for('oauth'))
 
@@ -101,6 +100,15 @@ def settings(username):
     query = request.args.to_dict()
     if 'key' not in query:
         return redirect(url_for('index'))
+    # check key for match!
+    return 'OK'
+
+
+@app.route('/app/<username>/feed.atom')
+def feed(username):
+    query = request.args.to_dict()
+    if 'key' not in query:
+        return render_template('feed_unauthorized.xml')
     # check key for match!
     return 'OK'
 
