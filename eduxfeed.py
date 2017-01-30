@@ -66,6 +66,18 @@ def auth(auth_file='./auth.cfg', target='edux', debug=True):
     return username, password
 
 
+def oauth(redirect='http://127.0.0.1:5000/authorize'):
+    username, password = auth(target='kosapi')
+    url = 'https://auth.fit.cvut.cz/oauth/authorize'
+    params = {
+        'client_id': username,
+        'response_type': 'code',
+        'redirect_uri': redirect,
+    }
+    req = requests.Request('GET', url, params=params)
+    return req.prepare().url
+
+
 def configparser_case(case_sensitive=True):
     config = configparser.ConfigParser()
     if case_sensitive:
