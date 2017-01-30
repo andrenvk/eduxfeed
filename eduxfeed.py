@@ -155,6 +155,21 @@ def user_courses(sess):
     return courses
 
 
+def user_create(username, courses):
+    path = os.path.join(DIR, USERDATA, username + '.txt')
+    if os.path.exists(path):
+        return
+
+    config = configparser_case()
+    last = edux_db_last(courses.keys())
+    for code in courses:
+        config[code] = {}
+        config[code]['last'] = str(last[code])
+
+    with open(path, mode='w', encoding='utf-8') as f:
+        config.write(f)
+
+
 def edux_courses():
     # must not be authenticated!
     url = 'https://edux.fit.cvut.cz/'
@@ -202,6 +217,17 @@ def edux_db_init(file='courses.txt'):
 
     with open(path, mode='w', encoding='utf-8') as f:
         config.write(f)
+
+
+def edux_db_last(courses=[], file='courses.txt'):
+    path = os.path.join(DIR, CONFIG, file)
+    config = configparser_case()
+    config.read(path)
+    last = {}
+    for code in courses:
+        group = code.split('-')[0]
+        last[code] = config[group].getint(code, fallback=0)
+    return last
 
 
 if __name__ == '__main__':
