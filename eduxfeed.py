@@ -3,10 +3,13 @@ import sys
 import os.path
 import datetime
 import configparser
+import hashlib
+import uuid
 
 # import lxml
 import requests
 from bs4 import BeautifulSoup
+from flask import Flask, render_template, request, redirect, url_for
 
 KOSAPI = 'https://kosapi.fit.cvut.cz/api/3'
 EDUX = 'https://edux.fit.cvut.cz'
@@ -24,9 +27,11 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG = 'config'
 USERDATA = 'user'
 
+app = Flask(__name__)
+
 
 def main():
-    edux_db_init()
+    app.run(debug=True)
 
     # username, password = auth(target='kosapi')
     # sess, exp = session_kosapi(username, password)
@@ -47,12 +52,67 @@ def main():
     # print(r.request.headers)
 
 
+@app.route('/')
+@app.errorhandler(404)
+def index():
+    return render_template('oauth.html', url=url_for('oauth'))
+
+
+@app.route('/authorize')
+def authorize():
+    query = request.args.to_dict()
+    if 'code' not in query:
+        return redirect(url_for('index'))
+
+    username, password, callback = auth(target='oauth')
+    url = 'https://auth.fit.cvut.cz/oauth/oauth/token'
+    params = {
+        'code': query['code'],
+        'client_id': username,
+        'client_secret': password,
+        'redirect_uri': callback,
+        'grant_type': 'authorization_code',
+    }
+
+    try:
+        r = requests.post(url, data=params)
+        r.raise_for_status()
+        token = r.json()['access_token']
+        token_info = 'https://auth.fit.cvut.cz/oauth/check_token'
+        r = requests.get(token_info, params={'token': token})
+        r.raise_for_status()
+        username = r.json()['user_name']
+    except:
+        return redirect(url_for('index'))
+
+    key = user_register(username)
+    return redirect(url_for('settings', username=username, key=key))
+
+
+def user_register(username):
+    uid = uuid.uuid4()
+    h = hashlib.sha256()
+    h.update(str(uid).encode('ascii'))
+    return h.hexdigest()
+
+
+@app.route('/app/<username>')
+def settings(username):
+    query = request.args.to_dict()
+    if 'key' not in query:
+        return redirect(url_for('index'))
+    # check key for match!
+    return 'OK'
+
+
 def auth(auth_file='./auth.cfg', target='edux', debug=True):
     config = configparser.ConfigParser()
     try:
         config.read(auth_file)
         username = config[target]['username']
         password = config[target]['password']
+        if target == 'oauth':
+            callback = config[target]['callback']
     except:
         print('Config file error.', file=sys.stderr)
         with open(os.path.join(os.path.dirname(__file__), 'auth.cfg.sample')) as f:
@@ -63,19 +123,24 @@ def auth(auth_file='./auth.cfg', target='edux', debug=True):
             raise
         else:
             sys.exit(1)
-    return username, password
+
+    if target == 'oauth':
+        return username, password, callback
+    else:
+        return username, password
 
 
-def oauth(redirect='http://127.0.0.1:5000/authorize'):
-    username, password = auth(target='kosapi')
+@app.route('/authorize/redirect')
+def oauth():
+    username, password, callback = auth(target='oauth')
     url = 'https://auth.fit.cvut.cz/oauth/authorize'
     params = {
         'client_id': username,
         'response_type': 'code',
-        'redirect_uri': redirect,
+        'redirect_uri': callback,
     }
     req = requests.Request('GET', url, params=params)
-    return req.prepare().url
+    return redirect(req.prepare().url)
 
 
 def configparser_case(case_sensitive=True):

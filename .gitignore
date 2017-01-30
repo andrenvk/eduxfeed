@@ -1,2 +1,3 @@
 config/*.txt
 user/*.txt
+auth.cfg
