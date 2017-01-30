@@ -9,12 +9,28 @@ import requests
 from bs4 import BeautifulSoup
 
 KOSAPI = 'https://kosapi.fit.cvut.cz/api/3'
+EDUX = 'https://edux.fit.cvut.cz'
+FEED = EDUX + '/courses/{code}/feed.php'
+FEED_PARAMS = {
+    'mode': 'recent',
+    'view': 'pages',
+    'type': 'atom1',
+    'content': 'abstract',
+    'linkto': 'page',
+    'minor': '1'
+}
+
+DIR = os.path.dirname(os.path.realpath(__file__))
+CONFIG = 'config'
+USERDATA = 'user'
 
 
 def main():
-    username, password = auth(target='kosapi')
-    sess, exp = session_kosapi(username, password)
-    user_get_subjects(sess)
+    edux_db_init()
+
+    # username, password = auth(target='kosapi')
+    # sess, exp = session_kosapi(username, password)
+    # user_get_subjects(sess)
 
     # TODO update session
     # kosapi - expiration time
@@ -48,6 +64,13 @@ def auth(auth_file='./auth.cfg', target='edux', debug=True):
         else:
             sys.exit(1)
     return username, password
+
+
+def configparser_case(case_sensitive=True):
+    config = configparser.ConfigParser()
+    if case_sensitive:
+        config.optionxform = str
+    return config
 
 
 def session_edux(username, password):
@@ -153,6 +176,32 @@ def edux_courses():
                     courses[code.split('-')[0]] = [code]
 
     return courses
+
+
+def edux_feed_last(feed):
+    parser = BeautifulSoup(feed, "lxml-xml")
+    try:
+        link = parser.entry.link.get('href')
+        rev = re.search('\?.*rev=(\d+)', link).group(1)
+        return int(rev)
+    except:
+        return 0
+
+
+def edux_db_init(file='courses.txt'):
+    path = os.path.join(DIR, CONFIG, file)
+    config = configparser_case()
+
+    session = requests.Session() # TODO auth session
+    courses = edux_courses()
+    for group in courses:
+        config[group] = {}
+        for code in courses[group]:
+            r = session.get(FEED.format(code=code), params=FEED_PARAMS)
+            config[group][code] = str(edux_feed_last(r.text))
+
+    with open(path, mode='w', encoding='utf-8') as f:
+        config.write(f)
 
 
 if __name__ == '__main__':
