@@ -119,7 +119,6 @@ def session_kosapi(username, password):
         'client_id': username,
         'client_secret': password,
         'grant_type': 'client_credentials',
-        'scope': 'cvut:kosapi:read cvut:umapi:read',
     }
 
     try:
