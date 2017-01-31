@@ -9,7 +9,7 @@ import uuid
 # import lxml
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, url_for, request, redirect, abort
 
 KOSAPI = 'https://kosapi.fit.cvut.cz/api/3'
 EDUX = 'https://edux.fit.cvut.cz'
@@ -18,7 +18,7 @@ FEED_PARAMS = {
     'mode': 'recent',
     'view': 'pages',
     'type': 'atom1',
-    'content': 'abstract',
+    'content': 'diff',
     'linkto': 'page',
     'minor': '1'
 }
@@ -32,24 +32,6 @@ app = Flask(__name__)
 
 def main():
     app.run(debug=True)
-
-    # username, password = auth(target='kosapi')
-    # sess, exp = session_kosapi(username, password)
-    # user_get_subjects(sess)
-
-    # TODO update session
-    # kosapi - expiration time
-    # edux - check if still auth'd
-
-    # TODO test edux
-    # sess = session_kosapi(*auth())
-    # print(sess.get('https://edux.fit.cvut.cz/courses/BI-ZUM/feed.php').text)
-
-    # TODO test kosapi
-    # sess, exp = session_kosapi(*auth(section='kosapi'))
-    # r = sess.get("https://kosapi.fit.cvut.cz/api/3/courses/MI-MVI.16/parallels" +
-    #              "?sem=B161&limit=25&access_token=52a6a7da-447b-477c-9298-48e81baacae0")
-    # print(r.request.headers)
 
 
 @app.route('/')
@@ -84,32 +66,64 @@ def authorize():
     except:
         return redirect(url_for('index'))
 
-    key = user_register(username)
+    key = user_key(username)
     return redirect(url_for('settings', username=username, key=key))
 
 
+def user_path(username):
+    return os.path.join(DIR, USERDATA, username + '.txt')
+
+
+def user_exist(username):
+    return os.path.exists(user_path(username))
+
+
+def user_key(username):
+    path = user_path(username)
+    config = configparser_case()
+
+    if not user_exist(username):
+        user_register(username)
+    config.read(path)
+
+    return config['AUTH']['key']
+
+
 def user_register(username):
-    uid = uuid.uuid4()
+    path = user_path(username)
+    config = configparser_case()
+
+    config['AUTH'] = {}
+    secret = str(uuid.uuid4())
     h = hashlib.sha256()
-    h.update(str(uid).encode('ascii'))
-    return h.hexdigest()
+    h.update(secret.encode('ascii'))
+    key = h.hexdigest()
+    config['AUTH']['secret'] = secret
+    config['AUTH']['key'] = key
+
+    with open(path, mode='w', encoding='utf-8') as f:
+        config.write(f)
 
 
 @app.route('/app/<username>')
 def settings(username):
     query = request.args.to_dict()
-    if 'key' not in query:
+    if not user_exist(username):
+        abort(404)
+    elif ('key' not in query or query['key'] != user_key(username)):
         return redirect(url_for('index'))
-    # check key for match!
+
     return 'OK'
 
 
 @app.route('/app/<username>/feed.atom')
 def feed(username):
     query = request.args.to_dict()
-    if 'key' not in query:
+    if not user_exist(username):
+        abort(404)
+    elif ('key' not in query or query['key'] != user_key(username)):
         return render_template('feed_unauthorized.xml')
-    # check key for match!
+
     return 'OK'
 
 
@@ -220,12 +234,7 @@ def session_kosapi(username, password):
     return session, expiration
 
 
-def user_username():
-    pass
-
-
-def user_courses(sess):
-    username = 'novako20' # user_username()
+def user_courses(sess, username):
     r = sess.get(KOSAPI + '/students/{}/enrolledCourses'.format(username))
     # TODO tutorial error -- POST method error 405 Not Allowed
     # https://auth.fit.cvut.cz/manager/app-types.xhtml#service-account
@@ -241,10 +250,9 @@ def user_courses(sess):
 
 def user_create(username, courses):
     path = os.path.join(DIR, USERDATA, username + '.txt')
-    if os.path.exists(path):
-        return
-
+    # config already exists -- user registered
     config = configparser_case()
+    config.read(path)
     last = edux_db_last(courses.keys())
     for code in courses:
         config[code] = {}
