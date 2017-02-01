@@ -132,7 +132,7 @@ def settings(username):
     return 'OK'
 
 
-@app.route('/app/<username>/feed.atom')
+@app.route('/app/<username>/feed.xml')
 def feed(username):
     query = request.args.to_dict()
     if not user_exist(username):
@@ -140,7 +140,23 @@ def feed(username):
     elif ('key' not in query or query['key'] != user_key(username)['key']):
         return render_template('feed_unauthorized.xml')
 
-    return 'OK'
+    items = []
+    feed = user_feed_get(username)
+    for src in ['pages', 'media']:
+        if src in feed:
+            for code in feed[src]:
+                for path in feed[src][code]:
+                    items.append({
+                        'src': src,
+                        'code': code,
+                        'path': path,
+                        'item': feed[src][code][path],
+                    })
+
+    items.sort(key=lambda item: item['item']['to'], reverse=True)
+
+    # TODO <updated>2017-02-01T13:38:06+01:00</updated>
+    return render_template('feed.xml', username=username, items=items)
 
 
 def auth(auth_file='./auth.cfg', target='edux', debug=True):
