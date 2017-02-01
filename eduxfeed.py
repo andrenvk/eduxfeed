@@ -277,6 +277,15 @@ def user_create(username, courses):
         config.write(f)
 
 
+def user_config(username):
+    config = {}
+    for file in [('config', ''), ('pages', '_pages'), ('media', '_media')]:
+        path = os.path.join(DIR, USERDATA, username + cfg + '.txt')
+        config[key] = configparser_case()
+        config[key].read(path)
+    return config
+
+
 def edux_courses():
     # must not be authenticated!
     url = 'https://edux.fit.cvut.cz/'
