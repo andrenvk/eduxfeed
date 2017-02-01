@@ -3,6 +3,7 @@ import re
 import sys
 import datetime
 import configparser
+from collections import deque
 import hashlib
 import uuid
 
@@ -13,6 +14,7 @@ from flask import Flask, render_template, url_for, request, redirect, abort
 
 KOSAPI = 'https://kosapi.fit.cvut.cz/api/3'
 EDUX = 'https://edux.fit.cvut.cz'
+AJAX = EDUX + '/courses/{code}/lib/exe/ajax.php'
 FEED = EDUX + '/courses/{code}/feed.php'
 FEED_PARAMS = {
     'mode': 'recent',
@@ -284,6 +286,65 @@ def user_config(username):
         config[key] = configparser_case()
         config[key].read(path)
     return config
+
+
+def edux_check_media(code, session):
+    path = os.path.join(DIR, CONFIG, 'courses_{}.txt'.format(code))
+    config = configparser_case()
+    config.read(path)
+
+    ajax = AJAX.format(code=code)
+    items = {}
+
+    data = {'call': 'medians'}
+    namespaces = ['']
+    d = deque(namespaces)
+    while len(d):
+        data['ns'] = d.popleft()
+        r = session.post(ajax, data=data)
+        parser = BeautifulSoup(r.text, 'html.parser')
+        for a in parser.find_all('a'):
+            ns = a['href'].split('=')[-1]
+            namespaces.append(ns)
+            d.append(ns)
+
+    data = {'call': 'medialist'}
+    for ns in namespaces:
+        data['ns'] = ns
+        r = session.post(ajax, data=data)
+        parser = BeautifulSoup(r.text, 'html.parser')
+        for div in parser.find_all('div', {'class': ['even', 'odd']}):
+            link = div.find(lambda tag: tag.name == 'a' and tag.has_attr('href'))['href']
+            # link to full -- compatibility with pages
+            link = re.sub('^.*?/courses/', EDUX + '/courses/', link)
+            path = re.sub('^.*?/courses/', '', link)
+            info = div.span.i
+            date, time = info.text.replace('/', '-').split(' ')
+            size, unit = info.next_sibling.string.strip('( )').split(' ')
+            timestamp = int(datetime.datetime.strptime('{} {}'.format(date, time), '%Y-%m-%d %H:%M').timestamp())
+            if path not in config[code] or int(config[code][path]) < timestamp:
+                config[code][path] = str(timestamp)
+                items[path] = {
+                    'path': {
+                        'path': path,
+                        'link': link,
+                    },
+                    'time': {
+                        'date': date,
+                        'time': time,
+                        'timestamp': timestamp,
+                    },
+                    'info': {
+                        'size': size,
+                        'unit': unit,
+                        'new': path not in config[code],
+                    },
+                }
+
+    with open(path, mode='w', encoding='utf-8') as f:
+        config.write(f)
+
+    return items
 
 
 def edux_check_feed(code, timestamp, session):
