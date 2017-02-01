@@ -286,6 +286,91 @@ def user_config(username):
     return config
 
 
+def edux_check_feed(code, timestamp, session):
+    r = session.get(FEED.format(code=code), params=FEED_PARAMS)
+    try:
+        r.raise_for_status()
+    except:
+        return None, 0
+
+    last = edux_feed_last(r.text)
+    if not last > timestamp:
+        return None, 0
+
+    items = {}
+    authors = {} # TODO save authors
+    session = session_kosapi(*auth(target='kosapi'))
+    parser = BeautifulSoup(r.text, 'lxml-xml')
+    entries = parser.find_all('entry')
+    for entry in entries:
+        # sorted from newest (thus, highest timestamp)
+        # https://www.dokuwiki.org/syndication#item_sorting
+        link = entry.link['href']
+        rev = int(re.search('\?.*rev=(\d+)', link).group(1))
+        if not rev > timestamp:
+            break
+        link = re.sub('^.*?/courses/', EDUX + '/courses/', link)
+        path = re.sub('^.*?/courses/', '', link)
+        path = re.sub('\?.*$', '', path)
+        if re.match('/classification/student/', path) or re.match('/student/', path):
+            continue
+
+        items[rev] = {}
+        item = items[rev]
+        item['path'] = {
+            'path': path,
+            'link': link,
+        }
+
+        date, time = entry.published.text.split('T')
+        item['time'] = {
+            'date': date,
+            'time': time[:5],
+            'timestamp': rev,
+        }
+
+        username = entry.author.name
+        if username not in authors:
+            names = edux_author(session, username)
+            if names:
+                authors[username] = {
+                    'first': names[0],
+                    'last': names[-1],
+                }
+
+        if username not in authors:
+            item['author'] = {
+                'username': username,
+            }
+        else:
+            item['author'] = {
+                'username': username,
+                'first': authors[username]['first'],
+                'last': authors[username]['last'],
+            }
+
+    '''
+    path = os.path.join(DIR, CONFIG, 'authors.txt')
+    config = configparser_case()
+    config.read(path)
+
+    with open(path, mode='w', encoding='utf-8') as f:
+        config.write(f)
+    '''
+
+    return items, last
+
+
+def edux_author(sess, username):
+    r = sess.get('https://kosapi.fit.cvut.cz/usermap/v1/people/{}'.format(username))
+    try:
+        r.raise_for_status()
+        json = r.json()
+        return (json['firstName'], json['lastName'])
+    else:
+        return None
+
+
 def edux_courses():
     # must not be authenticated!
     url = 'https://edux.fit.cvut.cz/'
