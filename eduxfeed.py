@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import pickle
 import datetime
 import configparser
 from collections import deque
@@ -286,6 +287,22 @@ def user_config(username):
         config[key] = configparser_case()
         config[key].read(path)
     return config
+
+
+def user_feed_get(username):
+    path = os.path.join(DIR, USERDATA, username + '_feed.p')
+    # with open(path, 'wb') as f:
+    #     pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+    with open('data.pickle', 'rb') as f:
+        feed = pickle.load(f)
+
+    return feed
+
+
+def user_feed_set(username, feed):
+    path = os.path.join(DIR, USERDATA, username + '_feed.p')
+    with open(path, 'wb') as f:
+        pickle.dump(feed, f, pickle.HIGHEST_PROTOCOL)
 
 
 def app_users():
