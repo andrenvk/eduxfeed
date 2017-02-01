@@ -66,7 +66,7 @@ def authorize():
     except:
         return redirect(url_for('index'))
 
-    key = user_key(username)
+    key = user_key(username)['key']
     return redirect(url_for('settings', username=username, key=key))
 
 
@@ -82,24 +82,37 @@ def user_key(username):
     path = user_path(username)
     config = configparser_case()
 
+    # TODO register only after login!
     if not user_exist(username):
         user_register(username)
     config.read(path)
 
-    return config['AUTH']['key']
+    keys = {
+        'secret': config['CONFIG']['secret'],
+        'key': config['CONFIG']['key'],
+    }
+
+    return keys
 
 
 def user_register(username):
     path = user_path(username)
     config = configparser_case()
+    section = 'CONFIG'
 
-    config['AUTH'] = {}
+    config[section] = {}
     secret = str(uuid.uuid4())
     h = hashlib.sha256()
     h.update(secret.encode('ascii'))
     key = h.hexdigest()
-    config['AUTH']['secret'] = secret
-    config['AUTH']['key'] = key
+    config[section]['secret'] = secret
+    config[section]['key'] = key
+
+    config[section]['media'] = str(int(True))
+    config[section]['en'] = str(int(False))
+
+    config['COURSES'] = {}
+    # TODO courses
 
     with open(path, mode='w', encoding='utf-8') as f:
         config.write(f)
@@ -110,7 +123,7 @@ def settings(username):
     query = request.args.to_dict()
     if not user_exist(username):
         abort(404)
-    elif ('key' not in query or query['key'] != user_key(username)):
+    elif ('key' not in query or query['key'] != user_key(username)['key']):
         return redirect(url_for('index'))
 
     return 'OK'
@@ -121,7 +134,7 @@ def feed(username):
     query = request.args.to_dict()
     if not user_exist(username):
         abort(404)
-    elif ('key' not in query or query['key'] != user_key(username)):
+    elif ('key' not in query or query['key'] != user_key(username)['key']):
         return render_template('feed_unauthorized.xml')
 
     return 'OK'
