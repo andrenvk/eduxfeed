@@ -159,6 +159,72 @@ def feed(username):
     return render_template('feed.xml', username=username, items=items)
 
 
+@app.template_filter('path')
+def filter_path(path):
+    path = re.sub('/(start)?$', '', path)
+    path = re.sub('^.*?/', '', path)
+    # if root namespace, then 'code' remains:
+    # MI-PYT/lectures/start => lectures
+    # MI-PYT/lectures => lectures
+    # MI-PYT/start => MI-PYT
+    # MI-PYT/ => MI=PYT
+    # MI-PYT => MI-PYT
+
+    return path
+
+
+@app.template_filter('author')
+def filter_author(detail):
+    info = detail['info']
+    if 'first' in info and 'last' in info:
+        author = '{} {}'.format(info['first'], info['last'])
+    elif 'username' in info:
+        author = info['username']
+    else:
+        author = 'eduxfeed'
+
+    return author
+
+
+@app.template_filter('time')
+def filter_time(detail):
+    time = detail['time']
+    datetime = '{} {}'.format(time['date'], time['time'])
+
+    return datetime
+
+
+@app.template_filter('size')
+def filter_size(detail):
+    info = detail['info']
+    size = '{} {}'.format(info['size'], info['unit'])
+
+    return size
+
+
+@app.template_filter('sort')
+def filter_sort(details):
+    return sorted(details)
+
+
+@app.template_filter('link')
+def filter_link(item, username, target=None):
+    # preserve order
+    params = [
+        ('src', item['src']),
+        ('code', item['code']),
+        ('path', item['path']),
+        ('from', item['item']['from']),
+        ('to', item['item']['to']),
+        ('hash', item['item']['hash']),
+    ]
+    if target:
+        params.append(('target', target))
+
+    req = requests.Request('GET', url_for('redirect', username=username), params=params)
+    return req.prepare().url
+
+
 def auth(auth_file='./auth.cfg', target='edux', debug=True):
     config = configparser.ConfigParser()
     try:
