@@ -73,6 +73,45 @@ def authorize():
     return redirect(url_for('settings', username=username, key=key))
 
 
+@app.route('/app/<username>/redirect')
+def redirect():
+    query = request.args.to_dict()
+    if not user_exist(username):
+        abort(404)
+    args = ['src', 'code', 'path', 'from', 'to', 'hash']
+    for arg in args:
+        if arg not in query:
+            return redirect(url_for('index'))
+
+    h = hashlib.sha256()
+    h.update(args['src'].encode('ascii'))
+    h.update(args['code'].endode('ascii'))
+    h.update(args['path'].encode('ascii'))
+    h.update(args['from'].encode('ascii'))
+    h.update(args['to'].encode('ascii'))
+    h.update(user_key(username)['secret'].encode('ascii'))
+    if args['hash'] != h.hexdigest():
+        return redirect(url_for('index'))
+
+    if args['src'] == 'pages':
+        path = args['path'] if args['path'] != args['code'] else ''
+        url = EDUX + '/courses/' + path + '/start'
+
+        diff = True
+        if 'target' in args and args['target'] == 'current':
+            diff = False
+        if diff:
+            url = url + '?do=diff&rev2[]={}&rev2[]={}'
+            url = url.format(args['from'], args['to'])
+
+    elif args['src'] == 'media':
+        diff = False
+        url = EDUX + '/courses/' + args['path']
+
+    app_markread(username, query, diff)
+    return redirect(url)
+
+
 def user_path(username):
     return os.path.join(DIR, USERDATA, username + '.txt')
 
