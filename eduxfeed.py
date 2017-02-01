@@ -305,6 +305,60 @@ def user_feed_set(username, feed):
         pickle.dump(feed, f, pickle.HIGHEST_PROTOCOL)
 
 
+def app_update():
+    users = app_users()
+    changes = edux_check()
+    for user in users:
+        feed = user_feed_get(username)
+        config = user_config(username)
+        secret = config['CONFIG']['secret']
+        for src in ['pages', 'media']:
+            if not config['CONFIG'].getboolean(src, fallback=True):
+                continue
+            for code in config['COURSES']:
+                if code not in changes[src]:
+                    continue
+                if changes[src][code]:
+                    if code not in feed[src]:
+                        feed[src][code] = {}
+                    content = feed[src][code]
+                    updates = changes[src][code]
+
+                    for timestamp, update in updates.items():
+                        path = update['path']['path']
+                        if path not in content:
+                            content[path] = {}
+
+                        content[path]['new'] = False
+                        timestamp = update['time']['timestamp']
+                        if 'from' not in content[path]:
+                            if src == 'pages':
+                                old = edux_revision(path, int(changes[src][code]))
+                                if old == timestamp:
+                                    content[path]['new'] = True
+                                content[path]['from'] = old
+                            elif src == 'media':
+                                content[path]['from'] = timestamp
+                                content[path]['new'] = update['info']['new']
+                        content[path]['to'] = timestamp
+
+                        h = hashlib.sha256()
+                        h.update(src.encode('ascii'))
+                        h.update(code.endode('ascii'))
+                        h.update(path.encode('ascii'))
+                        h.update(str(content[path]['from']).encode('ascii'))
+                        h.update(str(content[path]['to']).encode('ascii'))
+                        h.update(secret.encode('ascii'))
+                        content[path]['hash'] = h.hexdigest()
+                        content[path]['updates'][timestamp] = {
+                            'time': update['time'],
+                            'info': update['author'] if src == 'pages' else update['info'],
+                        }
+
+        user_feed_set(username, feed)
+        # TODO user_config_set(username, config)
+
+
 def app_users():
     files = [f for f in os.listdir(os.path.join(DIR, USERDATA)) if os.path.isfile(f)]
     # accept just username.txt, ignore .dotfiles and user-specific files like username_media.txt
