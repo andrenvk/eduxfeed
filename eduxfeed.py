@@ -288,6 +288,20 @@ def user_config(username):
     return config
 
 
+def app_users():
+    files = [f for f in os.listdir(os.path.join(DIR, USERDATA)) if os.path.isfile(f)]
+    # accept just username.txt, ignore .dotfiles and user-specific files like username_media.txt
+    users = [f.split('.')[0] for f in files if not (re.search('_', f) or re.match('\.', f))]
+    return users
+
+
+def app_courses():
+    path = os.path.join(DIR, CONFIG, 'courses.txt')
+    config = configparser_case()
+    config.read(path)
+    return config
+
+
 def edux_check():
     changes = {}
     courses = app_courses()
