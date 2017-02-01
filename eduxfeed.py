@@ -112,6 +112,45 @@ def redirect():
     return redirect(url)
 
 
+def app_markread(username, item, diff):
+    feed = user_feed_get(username)
+
+    try:
+        src = feed[item['src']]
+        code = src[item['code']]
+        path = code[item['path']]
+    except:
+        # already deleted from feed
+        return
+
+    to = int(item['to'])
+    if to == path['to']:
+        # current feed item
+        # possible cascade delete
+        del code[item['path']]
+        if not code:
+            del src[item['code']]
+        if not src:
+            del feed[item['src']]
+    else:
+        # feed has new updates
+        for timestamp in path['updates']:
+            if not timestamp > to:
+                del path['updates'][timestamp]
+        path['from'] = to
+
+        h = hashlib.sha256()
+        h.update(item['src'].encode('ascii'))
+        h.update(item['code'].endode('ascii'))
+        h.update(item['path'].encode('ascii'))
+        h.update(str(path['from']).encode('ascii'))
+        h.update(str(path['to']).encode('ascii'))
+        h.update(user_key(username)['secret'].encode('ascii'))
+        path['hash'] = h.hexdigest()
+
+    user_feed_set(username, feed)
+
+
 def user_path(username):
     return os.path.join(DIR, USERDATA, username + '.txt')
 
