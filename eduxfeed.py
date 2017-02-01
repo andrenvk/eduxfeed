@@ -288,6 +288,28 @@ def user_config(username):
     return config
 
 
+def edux_check():
+    changes = {}
+    courses = app_courses()
+    session = requests.Session() # TODO auth session
+    for group in courses:
+        for code in courses[group]:
+            media = edux_check_media(code=code, session=session)
+            pages, last = edux_check_feed(code=code, timestamp=int(courses[group][code]), session=session)
+            courses[group][code] = last
+            if media or pages:
+                changes[code] = {
+                    'pages': pages,
+                    'media': media,
+                }
+
+    path = os.path.join(DIR, CONFIG, 'courses.txt')
+    with open(path, mode='w', encoding='utf-8') as f:
+        courses.write(f)
+
+    return changes
+
+
 def edux_check_media(code, session):
     path = os.path.join(DIR, CONFIG, 'courses_{}.txt'.format(code))
     config = configparser_case()
