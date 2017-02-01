@@ -1,6 +1,6 @@
+import os
 import re
 import sys
-import os.path
 import datetime
 import configparser
 import hashlib
@@ -20,7 +20,7 @@ FEED_PARAMS = {
     'type': 'atom1',
     'content': 'diff',
     'linkto': 'page',
-    'minor': '1'
+    'minor': '1',
 }
 
 DIR = os.path.dirname(os.path.realpath(__file__))
@@ -178,11 +178,11 @@ def session_edux(username, password):
 
     def get_formdata(html):
         formdata = {}
-        parser = BeautifulSoup(html, "html.parser")
+        parser = BeautifulSoup(html, 'html.parser')
         form = parser.find('form', {'method': 'post'})
-        for i in form.find_all('input'):
-            if i.get('type') != 'submit':
-                formdata[i.get('name')] = i.get('value')
+        for inp in form.find_all('input'):
+            if inp['type'] != 'submit':
+                formdata[inp['name']] = inp['value']
         return formdata
 
     try:
@@ -234,15 +234,16 @@ def session_kosapi(username, password):
     return session, expiration
 
 
-def user_courses(sess, username):
+def user_courses(username):
+    sess = session_kosapi(*auth(target'kosapi'))
     r = sess.get(KOSAPI + '/students/{}/enrolledCourses'.format(username))
     # TODO tutorial error -- POST method error 405 Not Allowed
     # https://auth.fit.cvut.cz/manager/app-types.xhtml#service-account
-    parser = BeautifulSoup(r.text, "lxml-xml")
+    parser = BeautifulSoup(r.text, 'lxml-xml')
 
     courses = {}
     for course in parser.find_all('course'):
-        code = re.sub('^.+/', '', course.get('xlink:href').rstrip('/'))
+        code = re.sub('^.+/', '', course['xlink:href'].rstrip('/'))
         courses[code] = course.text
 
     return courses
@@ -251,6 +252,7 @@ def user_courses(sess, username):
 def user_create(username, courses):
     path = os.path.join(DIR, USERDATA, username + '.txt')
     # config already exists -- user registered
+    # TODO create other configs + feed
     config = configparser_case()
     config.read(path)
     last = edux_db_last(courses.keys())
@@ -266,7 +268,7 @@ def edux_courses():
     # must not be authenticated!
     url = 'https://edux.fit.cvut.cz/'
     r = requests.get(url)
-    parser = BeautifulSoup(r.text, "html.parser")
+    parser = BeautifulSoup(r.text, 'html.parser')
 
     courses = {}
     for courselist in parser.find_all('div', {'class': 'courselist_field'}):
@@ -286,17 +288,17 @@ def edux_courses():
 
 
 def edux_feed_last(feed):
-    parser = BeautifulSoup(feed, "lxml-xml")
+    parser = BeautifulSoup(feed, 'lxml-xml')
     try:
-        link = parser.entry.link.get('href')
+        link = parser.entry.link['href']
         rev = re.search('\?.*rev=(\d+)', link).group(1)
         return int(rev)
     except:
         return 0
 
 
-def edux_db_init(file='courses.txt'):
-    path = os.path.join(DIR, CONFIG, file)
+def edux_db_init():
+    path = os.path.join(DIR, CONFIG, 'courses.txt')
     config = configparser_case()
 
     session = requests.Session() # TODO auth session
