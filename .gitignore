@@ -1,3 +1,4 @@
-config/*.txt
-user/*.txt
+__pycache__/
+edux/
+user/
 auth.cfg
