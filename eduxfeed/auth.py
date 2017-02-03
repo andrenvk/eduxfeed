@@ -41,7 +41,7 @@ def session_edux(username, password):
         parser = BeautifulSoup(html, 'html.parser')
         form = parser.find('form', {'method': 'post'})
         for inp in form.find_all('input'):
-            if inp['type'] != 'submit':
+            if inp['type'] != 'submit' and 'value' in inp.attrs:
                 formdata[inp['name']] = inp['value']
         return formdata
 

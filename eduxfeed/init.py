@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 
 def edux_init():
+    db.init()
     courses = edux_courses()
     session = session_edux(*auth(target='edux'))
     edux_init_pages(courses, session)
@@ -27,8 +28,8 @@ def edux_courses():
         if table:
             for course in table.find_all('a'):
                 code = course.text.strip()
-                # no BIK- subjects and alike / TV course (if applicable)
-                if re.match('[^-]+K-', code) or not re.search('-', code):
+                # no BIK- subjects and alike / TV course / MI-SPI-1
+                if re.match('[^-]+K-', code) or len(code.split('-')) != 2:
                     continue
                 courses.append(code)
 
@@ -39,6 +40,7 @@ def edux_init_pages(courses, session):
     pages = db.edux_pages()
     pages['COURSES'] = {}
     for course in courses:
+        # print('PAGES', course)
         last = edux_check_pages(course, session, authors=None, timestamp=None)
         if last is None:
             last = 0
@@ -48,7 +50,8 @@ def edux_init_pages(courses, session):
 
 def edux_init_media(courses, session):
     for course in courses:
+        # print('MEDIA', course)
         media = db.edux_media(course)
         media[course] = {}
-        db.edux_media_set(media)
-        _ = edux_media_check(course, session)
+        db.edux_media_set(course, media)
+        _ = edux_check_media(course, session)

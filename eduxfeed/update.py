@@ -106,15 +106,26 @@ def edux_check_media(course, session):
     media = db.edux_media(course)
     ajax = AJAX.format(course=course)
 
+    # possible redirect on POST
+    # e.g. BI-3DT.1 => BI-3DT
+    r = session.get(ajax)
+    ajax = r.request.url
+
     namespaces = ['']
     d = deque(namespaces)
     data = {'call': 'medians'}
     while len(d):
         data['ns'] = d.popleft()
-        r = session.post(ajax, data=data)
+        try:
+            r = session.post(ajax, data=data)
+            r.raise_for_status()
+        except:
+            # e.g. non-existent course MI-SPI-1
+            continue
         parser = BeautifulSoup(r.text, 'html.parser')
         for a in parser.find_all('a'):
             ns = a['href'].split('=')[-1]
+            # re.search('mailto', ns) if error passed
             namespaces.append(ns)
             d.append(ns)
 
@@ -157,7 +168,7 @@ def edux_check_media(course, session):
 
 def edux_check_pages(course, session, authors, timestamp):
     try:
-        r = session.get(FEED.format(code=code), params=FEED_PARAMS)
+        r = session.get(FEED.format(course=course), params=FEED_PARAMS)
         r.raise_for_status()
     except:
         return None

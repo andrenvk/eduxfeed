@@ -47,6 +47,12 @@ def _setter(path, config):
         config.write(f)
 
 
+def init():
+    for path in BASE.values():
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+
 def edux_path():
     return os.path.join(BASE['edux'], EDUX['pages'])
 
@@ -56,7 +62,7 @@ def edux_pages():
 
 
 def edux_pages_set(config):
-    _setter(edux_path())
+    _setter(edux_path(), config)
 
 
 def edux_media(course):
