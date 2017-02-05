@@ -2,8 +2,9 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 <title>eduxfeed</title>
 <entry>
-    <title>Error</title>
+    <title>error</title>
     <link rel="alternate" type="text/html" href="/"/>
     <author><name>eduxfeed</name></author>
     <summary>Authorized access is required to read this feed.</summary>
 </entry>
+</feed>

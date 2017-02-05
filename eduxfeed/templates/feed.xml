@@ -1,42 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 <title>eduxfeed</title>
+<id>eduxfeed:{{ username }}</id>
 
 {% for item in items %}
 <entry>
     <title>{{ item.code }}: {{ item.path | path }}</title>
+    <id>{{ item | uniq }}</id>
+    <updated>{{ item.item.to | updated }}</updated>
     <link rel="alternate" type="text/html" href="{{ item | link(username) }}"/>
-    # src code path item
     <author><name>{{ item.item.updates[item.item.to] | author | e }}</name></author>
     <content type="html">
-        <p>
+        &lt;p&gt;
         {% if item.item.new %}
             New {% if item.src == 'pages' %}page{% else %}file{% endif %} created.
         {% else %}
             {% if item.src == 'pages' %}Page{% else %}File{% endif %} updated.
         {% endif %}
-        </p>
+        &lt;/p&gt;
         
-        <p>Update time: {{ item.item.updates[item.item.to] | time | e }}</p>
-        <p><i>
+        &lt;p&gt;Update time:&lt;br&gt;
+        {{ item.item.updates[item.item.to] | time | e }}&lt;/p&gt;
+        
+        &lt;p&gt;&lt;i&gt;
         {% if item.src == 'pages' %}
             Edits:
-            </br>
+            &lt;br&gt;
             {% for timestamp in item.item.updates | sort %}
-                {{ item.item.updates[timestamp] | time | e }} {{ item.item.updates[timestamp] | author | e }}</br>
+                {{ item.item.updates[timestamp] | time | e }} {{ item.item.updates[timestamp] | author | e }}&lt;br&gt;
             {% endfor %}
         {% else %}
             Filesize: {{ item.item.updates[item.item.to] | size | e }}
         {% endif %} 
-        </i></p>
+        &lt;/i&gt;&lt;/p&gt;
         
-        <p>
-            <a href="{{ item | link(username, target='current') }}">Open current version</a>
+        &lt;p&gt;
+            &lt;a href=&quot;{{ item | link(username, target='current') }}&quot;&gt;Open current version&lt;/a&gt;
         {% if item.src == 'pages' %}
-            </br>
-            <a href="{{ item | link(username, target='compare') }}">See the changes</a>
+            &lt;br&gt;
+            &lt;a href=&quot;{{ item | link(username, target='compare') }}&quot;&gt;See the changes&lt;/a&gt;
         {% endif %}
-        </p>
+        &lt;/p&gt;
     </content>
 </entry>
 {% endfor %}
+</feed>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+    
+    <head>
+        <title>eduxfeed</title>
+        <link href="{{ feed }}" type="application/atom+xml" rel="alternate" title="eduxfeed"/>
+        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <style>
+            body {padding: 0 20px;}
+            div {max-width: 400px;}
+            a {text-decoration: underline;}
+        </style>
+        <script>
+        $(document).ready(function() {
+            var submithandler = function(event) {
+                event.preventDefault();
+                res = $('tt');
+                res.text('processing');
+                $.ajax({
+                    type: 'POST',
+                    url: '{{ endpoint }}',
+                    data: $(this).serialize() + $(location).attr('search').replace('?', '&'),
+                    success: function() {res.text('OK');},
+                    error: function() {res.text('ERROR');}
+                });
+            };
+            $('form').submit(submithandler);
+        });
+        </script>
+    </head>
+    
+    <body>
+        <h2><a href="{{ feed }}">eduxfeed</a></h2>
+        
+        <form>
+            <div>
+            <h3>config</h3>
+
+            {% if config['media'] %}
+            <label><input type="checkbox" name="config" value="media" checked="checked"> files</label><br>
+            {% else %}
+            <label><input type="checkbox" name="config" value="media"> files</label><br>
+            {% endif %}
+            <p>check also updates of files uploaded to the course</p>
+
+            {% if config['en'] %}
+            <label><input type="checkbox" name="config" value="en" checked="checked"> english</label><br>
+            {% else %}
+            <label><input type="checkbox" name="config" value="en"> english</label><br>
+            {% endif %}
+            <p>check also english version of the course</p>
+
+            <input class="btn btn-primary" type="submit" id="submit_config" value="save">
+            <tt name="results"></tt>
+            </div>
+            
+            <div>
+            <h3>courses</h3>
+            {% for course in courses_all %}
+            {% if course in courses %}
+            <label><input type="checkbox" name="course" value="{{ course }}" checked="checked"> {{ course }}</label><br>
+            {% else %}
+            <label><input type="checkbox" name="course" value="{{ course }}"> {{ course }}</label><br>
+            {% endif %}
+            {% endfor %}
+            <input class="btn btn-primary" type="submit" id="submit_courses" value="save">
+            <tt name="results"></tt>
+            </div>
+        </form>
+    </body>
+ 
+</html>
