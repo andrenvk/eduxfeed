@@ -149,18 +149,15 @@ def item_markread(username, item, diff):
             del feed[item['src']]
     else:
         # feed has new updates
+        delete = []
         for timestamp in path['updates']:
             if not timestamp > to:
-                del path['updates'][timestamp]
-        path['from'] = to
-
-        h = hashlib.sha256()
-        h.update(item['src'].encode('ascii'))
-        h.update(item['code'].endode('ascii'))
-        h.update(item['path'].encode('ascii'))
-        h.update(str(path['from']).encode('ascii'))
-        h.update(str(path['to']).encode('ascii'))
-        h.update(user_secret(username).encode('ascii'))
-        path['hash'] = h.hexdigest()
+                delete.append(timestamp)
+        for key in delete:
+            del path['updates'][key]
+        if path['from'] < to:
+            path['from'] = to
+            digest = item_hash(username, args=(item['src'], item['code'], item['path'], path['from'], path['to']))
+            path['hash'] = digest
 
     db.user_feed_set(username, feed)

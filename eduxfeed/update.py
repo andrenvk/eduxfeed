@@ -30,7 +30,7 @@ def update():
     pages = db.edux_pages()
     courses = pages['COURSES']
     users = db.user_list()
-    for user in users:
+    for username in users:
         feed = db.user_feed(username)
         config = db.user_config(username)
         en = config['FEED'].getboolean('en', fallback=False)
@@ -49,8 +49,11 @@ def update():
 
                 for update in updates.values():
                     path = update['path']['path']
+                    if not en and re.match('[^/]+(/_media)?/en/', path):
+                        continue
                     if path not in content:
                         content[path] = {}
+                        content[path]['updates'] = {}
 
                     content[path]['new'] = False
                     timestamp = update['time']['timestamp']
@@ -65,7 +68,7 @@ def update():
                             content[path]['new'] = update['info']['new']
                     content[path]['to'] = timestamp
 
-                    digest = item_hash(user, args=(src, code, path, content[path]['from'], content[path]['to']))
+                    digest = item_hash(username, args=(src, code, path, content[path]['from'], content[path]['to']))
                     content[path]['hash'] = digest
                     content[path]['updates'][timestamp] = {
                         'time': update['time'],
@@ -83,21 +86,23 @@ def edux_check(session):
         'pages': {},
         'media': {},
     }
-    pages = db.edux_pages()
-    courses = pages['COURSES']
+    edux = db.edux_pages()
+    courses = edux['COURSES']
     authors = db.edux_authors()
 
     for course in courses:
+        print('PAGES', course)
         pages = edux_check_pages(course, session, authors, timestamp=int(courses[course]))
         if pages:
             changes['pages'][course] = pages
-            courses[course] = max(pages)
+            courses[course] = str(max(pages))
+        print('MEDIA', course)
         media = edux_check_media(course, session)
         if media:
             changes['media'][course] = media
 
     db.edux_authors_set(authors)
-    db.edux_pages_set(pages)
+    db.edux_pages_set(edux)
     return changes
 
 
@@ -149,9 +154,9 @@ def edux_check_pages(course, session, authors, timestamp):
             'prev': prev,
         }
 
-        username = entry.author.name
+        username = entry.author.text.strip()
         if username not in authors:
-            name = edux_author(session, username)
+            name = edux_author(username, session=None)
             if name:
                 authors[username] = {}
                 # preserve order in case of config
@@ -240,7 +245,7 @@ def edux_check_media(course, session):
 
 
 def edux_page_prev(path, session, timestamp):
-    url = '{edux}/courses/{path}/start?do=revisions'
+    url = '{edux}/courses/{path}?do=revisions'
     try:
         r = session.get(url.format(edux=EDUX, path=path))
         r.raise_for_status()
