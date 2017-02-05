@@ -4,12 +4,13 @@ import pickle
 import configparser
 
 
-EXT = '.txt'
-DIR = os.path.dirname(os.path.realpath(__file__))
+DB_DIR = os.path.realpath(os.environ.get('DB_DIR', './db'))
+
 BASE = {
-    'edux': os.path.join(DIR, 'edux'),
-    'user': os.path.join(DIR, 'user'),
+    'edux': os.path.join(DB_DIR, 'edux'),
+    'user': os.path.join(DB_DIR, 'user'),
 }
+EXT = '.txt'
 USER = {
     'config': '' + EXT,
     'feed': '_feed.p',
@@ -98,7 +99,7 @@ def user_exist(username):
 
 
 def user_list():
-    files = [f for f in os.listdir(BASE['user']) if os.path.isfile(f)]
+    files = [f for f in os.listdir(BASE['user']) if os.path.isfile(os.path.join(BASE['user'], f))]
     # accept just <username>.txt, ignore .dotfiles and user-specific files like <username>_feed.p
     users = [f.split(EXT)[0] for f in files if not (re.search('_', f) or re.match('\.', f))]
 
