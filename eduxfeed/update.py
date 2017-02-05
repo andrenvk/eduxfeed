@@ -101,71 +101,6 @@ def edux_check(session):
     return changes
 
 
-def edux_check_media(course, session):
-    items = {}
-    media = db.edux_media(course)
-    ajax = AJAX.format(course=course)
-
-    # possible redirect on POST
-    # e.g. BI-3DT.1 => BI-3DT
-    r = session.get(ajax)
-    ajax = r.request.url
-
-    namespaces = ['']
-    d = deque(namespaces)
-    data = {'call': 'medians'}
-    while len(d):
-        data['ns'] = d.popleft()
-        try:
-            r = session.post(ajax, data=data)
-            r.raise_for_status()
-        except:
-            # e.g. non-existent course MI-SPI-1
-            continue
-        parser = BeautifulSoup(r.text, 'html.parser')
-        for a in parser.find_all('a'):
-            ns = a['href'].split('=')[-1]
-            # re.search('mailto', ns) if error passed
-            namespaces.append(ns)
-            d.append(ns)
-
-    data = {'call': 'medialist'}
-    for ns in namespaces:
-        data['ns'] = ns
-        r = session.post(ajax, data=data)
-        parser = BeautifulSoup(r.text, 'html.parser')
-        for div in parser.find_all('div', {'class': ['even', 'odd']}):
-            link = div.find(lambda tag: tag.name == 'a' and tag.has_attr('href'))['href']
-            # link to full -- compatibility with pages
-            link = re.sub('^.*?/courses/', EDUX + '/courses/', link)
-            path = re.sub('^.*?/courses/', '', link)
-            info = div.span.i
-            date, time = info.text.replace('/', '-').split(' ')
-            size, unit = info.next_sibling.string.strip('( )').split(' ')
-            timestamp = int(datetime.strptime('{} {}'.format(date, time), '%Y-%m-%d %H:%M').timestamp())
-            if path not in media[course] or int(media[course][path]) < timestamp:
-                items[path] = {
-                    'path': {
-                        'path': path,
-                        'link': link,
-                    },
-                    'time': {
-                        'date': date,
-                        'time': time,
-                        'timestamp': timestamp,
-                    },
-                    'info': {
-                        'size': size,
-                        'unit': unit,
-                        'new': path not in media[course],
-                    },
-                }
-                media[course][path] = str(timestamp)
-
-    db.edux_media_set(course, media)
-    return items
-
-
 def edux_check_pages(course, session, authors, timestamp):
     try:
         r = session.get(FEED.format(course=course), params=FEED_PARAMS)
@@ -234,6 +169,73 @@ def edux_check_pages(course, session, authors, timestamp):
                 'last': authors[username]['last'],
             }
 
+    return items
+
+
+def edux_check_media(course, session):
+    items = {}
+    media = db.edux_media(course)
+    ajax = AJAX.format(course=course)
+
+    # possible redirect on POST
+    # e.g. BI-3DT.1 => BI-3DT
+    r = session.get(ajax)
+    ajax = r.request.url
+
+    namespaces = ['']
+    d = deque(namespaces)
+    data = {'call': 'medians'}
+    while len(d):
+        data['ns'] = d.popleft()
+        try:
+            r = session.post(ajax, data=data)
+            r.raise_for_status()
+        except:
+            # e.g. non-existent course MI-SPI-1
+            continue
+        parser = BeautifulSoup(r.text, 'html.parser')
+        for a in parser.find_all('a'):
+            ns = a['href'].split('=')[-1]
+            # re.search('mailto', ns) if error passed
+            namespaces.append(ns)
+            d.append(ns)
+
+    data = {'call': 'medialist'}
+    for ns in namespaces:
+        data['ns'] = ns
+        r = session.post(ajax, data=data)
+        parser = BeautifulSoup(r.text, 'html.parser')
+        for div in parser.find_all('div', {'class': ['even', 'odd']}):
+            link = div.find(lambda tag: tag.name == 'a' and tag.has_attr('href'))['href']
+            # link to full -- compatibility with pages
+            link = re.sub('^.*?/courses/', EDUX + '/courses/', link)
+            path = re.sub('^.*?/courses/', '', link)
+            if re.match('[^/]+/_media/student/', path):
+                continue
+            info = div.span.i
+            date, time = info.text.replace('/', '-').split(' ')
+            size, unit = info.next_sibling.string.strip('( )').split(' ')
+            timestamp = int(datetime.strptime('{} {}'.format(date, time), '%Y-%m-%d %H:%M').timestamp())
+            if path not in media[course] or int(media[course][path]) < timestamp:
+                items[path] = {
+                    'path': {
+                        'path': path,
+                        'link': link,
+                    },
+                    'time': {
+                        'date': date,
+                        'time': time,
+                        'timestamp': timestamp,
+                    },
+                    'info': {
+                        'size': size,
+                        'unit': unit,
+                        'new': path not in media[course],
+                    },
+                }
+                media[course][path] = str(timestamp)
+
+    db.edux_media_set(course, media)
     return items
 
 
