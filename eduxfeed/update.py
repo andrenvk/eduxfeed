@@ -1,6 +1,6 @@
 from . import db
 from .auth import EDUX
-from .auth import auth, session_edux
+from .auth import session_edux
 from .appcode import item_hash
 from .api import edux_author
 
@@ -25,7 +25,7 @@ FEED_PARAMS = {
 
 
 def update():
-    session = session_edux(*auth(target='edux'))
+    session = session_edux()
     changes = edux_check(session)
     pages = db.edux_pages()
     courses = pages['COURSES']

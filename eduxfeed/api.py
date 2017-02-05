@@ -1,4 +1,4 @@
-from .auth import auth, session_api
+from .auth import session_api
 
 import re
 
@@ -12,10 +12,10 @@ KOSAPI = API + '/api/3'
 
 def edux_author(username, session=None):
     if not session:
-        session = session_api(*auth(target='api'))
+        session = session_api()
 
     try:
-        r = sess.get(UMAPI + '/people/{username}'.format(username=username))
+        r = session.get(UMAPI + '/people/{username}'.format(username=username))
         r.raise_for_status()
         json = r.json()
         name = {
@@ -32,7 +32,7 @@ def edux_author(username, session=None):
 
 def user_enrolled(username, session=None):
     if not session:
-        session = session_api(*auth(target='api'))
+        session = session_api()
 
     try:
         r = session.get(KOSAPI + '/students/{username}/enrolledCourses'.format(username=username))

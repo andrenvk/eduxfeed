@@ -1,7 +1,7 @@
 from . import db
 from .auth import EDUX
-from .auth import auth, session_edux
-from .update import edux_check_media, edux_check_pages
+from .auth import session_edux
+from .update import edux_check_pages, edux_check_media
 
 import re
 
@@ -9,10 +9,10 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def edux_init():
+def init():
     db.init()
     courses = edux_courses()
-    session = session_edux(*auth(target='edux'))
+    session = session_edux()
     edux_init_pages(courses, session)
     edux_init_media(courses, session)
 
@@ -40,7 +40,7 @@ def edux_init_pages(courses, session):
     pages = db.edux_pages()
     pages['COURSES'] = {}
     for course in courses:
-        # print('PAGES', course)
+        print('PAGES', course)
         last = edux_check_pages(course, session, authors=None, timestamp=None)
         if last is None:
             last = 0
@@ -50,7 +50,7 @@ def edux_init_pages(courses, session):
 
 def edux_init_media(courses, session):
     for course in courses:
-        # print('MEDIA', course)
+        print('MEDIA', course)
         media = db.edux_media(course)
         media[course] = {}
         db.edux_media_set(course, media)

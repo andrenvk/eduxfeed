@@ -1,38 +1,50 @@
-import sys
-import os.path
+import os
 import configparser
+# from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
 
 
+AUTH_FILE = os.path.realpath(os.environ.get('AUTH_FILE', './auth.cfg'))
+
 AUTH = 'https://auth.fit.cvut.cz'
 EDUX = 'https://edux.fit.cvut.cz'
 
 
-def auth(target, auth_file='./auth.cfg'):
+def auth(target=None, file=None):
+    if file is None:
+        file = AUTH_FILE
+    if target is None:
+        return os.path.isfile(file)
+
+    credentials = []
     config = configparser.ConfigParser()
     try:
-        config.read(auth_file)
-        username = config[target]['username']
-        password = config[target]['password']
+        config.read(file)
+        credentials.append(config[target]['username'])
+        credentials.append(config[target]['password'])
         if target == 'oauth':
-            callback = config[target]['callback']
+            credentials.append(config[target]['callback'])
     except:
-        print('Config file error.', file=sys.stderr)
+        print('Config file error.')
         with open(os.path.join(os.path.dirname(__file__), 'auth.cfg.sample')) as f:
-            print()
-            print('See sample contents of auth.cfg:')
+            print('Make sure the credentials are valid.')
+            print('See below sample contents of auth.cfg:')
             print(f.read())
-        sys.exit(1)
+        # raising exception because file was set ok, but is missing auth info
+        # it is not clear in advance which auth sections will be used
+        # (could be only init and update -- the main logic)
+        # (also bad credentials -- oauth can't be dry-run)
+        # thus no check performed upon start a raise now
+        raise
 
-    if target == 'oauth':
-        return username, password, callback
-    else:
-        return username, password
+    return credentials
 
 
-def session_edux(username, password):
+def session_edux(username=None, password=None):
+    if username is None or password is None:
+        username, password = auth(target='edux')
     url = EDUX + '/start?do=login'
     session = requests.Session()
 
@@ -63,14 +75,18 @@ def session_edux(username, password):
         r = session.post(url, data=formdata)
         r.raise_for_status()
     except:
-        # TODO bad login does not raise exception
-        # TODO debug ~ raise ~ msg
-        raise
+        # this is heavily dependent on the structure of the web
+        # works as of now, can change in future, check in tests
+        # however, the app's logic allows non-auth edux session
+        # it just won't produce any updates until it works again
+        pass
 
     return session
 
 
-def session_api(username, password):
+def session_api(username=None, password=None):
+    if username is None or password is None:
+        username, password = auth(target='api')
     url = AUTH + '/oauth/oauth/token'
     session = requests.Session()
 
@@ -80,18 +96,21 @@ def session_api(username, password):
         'grant_type': 'client_credentials',
     }
 
-    r = session.post(url, data=data)
     try:
+        r = session.post(url, data=data)
         r.raise_for_status()
+        response = r.json()
+        session.headers['Authorization'] = 'Bearer {}'.format(response['access_token'])
+        # expiration = datetime.now() + datetime.timedelta(seconds=response['expires_in'] - 60)
+        # only needed for one-time checks
+        # (enrolled courses, usermap usernames)
+        # thus, no need to check expiration
+        # otherwise import datetime
     except:
-        # TODO bad auth
-        raise
-
-    response = r.json()
-    session.headers['Authorization'] = 'Bearer {}'.format(response['access_token'])
-    expiration = datetime.datetime.now() + datetime.timedelta(seconds=response['expires_in'] - 60)
-    # only needed for one-time checks
-    # (enrolled courses, usermap usernames)
-    # thus, no need to check expiration
+        # can fail because of bad credentials (or api provider problem)
+        # none of this is a fault of this app
+        # in such case the app flow continues
+        # but no courses are automatically subscribed
+        pass
 
     return session
