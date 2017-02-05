@@ -1,5 +1,5 @@
-from .db import user_feed
-from .appcode import user_login, user_key
+from .db import user_exist, user_feed
+from .appcode import user_login, user_key, user_settings, user_update
 from .appcode import item_hash, item_markread
 from .auth import AUTH, EDUX
 from .auth import auth
@@ -56,6 +56,7 @@ def authorize():
         r.raise_for_status()
         username = r.json()['user_name']
     except:
+        # login disabled if problems with auth
         return redirect(url_for('index'))
 
     user_login(username)
@@ -66,23 +67,54 @@ def authorize():
 def settings(username):
     query = request.args.to_dict()
     if not user_exist(username):
-        abort(404)
+        abort(400)
     elif ('key' not in query or query['key'] != user_key(username)):
-        return redirect(url_for('index'))
+        abort(400)
 
-    return 'OK'
+    config, courses, courses_all = user_settings(username)
+
+    return render_template(
+        'settings.html',
+        feed=url_for('feed', username=username, key=user_key(username)),
+        endpoint=url_for('update', username=username),
+        courses_all=courses_all,
+        courses=courses,
+        config=config,
+    )
+
+
+@app.route('/app/<username>/update', methods=['POST'])
+def update(username):
+    if not user_exist(username):
+        abort(400)
+
+    formdata = dict(zip(request.form.keys(), request.form.listvalues()))
+    if ('key' not in formdata or formdata['key'][0] != user_key(username)):
+        abort(400)
+
+    config, courses = [], []
+    if 'config' in formdata:
+        config = formdata['config']
+    if 'course' in formdata:
+        courses = formdata['course']
+
+    user_update(username, config, courses)
+    return 'OK', 200
 
 
 @app.route('/app/<username>/feed.xml')
 def feed(username):
     query = request.args.to_dict()
     if not user_exist(username):
-        abort(404)
+        abort(400)
     elif ('key' not in query or query['key'] != user_key(username)):
+        # actually exposing info about registered users
+        # but could be more useful to know what is wrong
         return render_template('feed_unauthorized.xml')
 
     items = []
     feed = user_feed(username)
+
     for src in feed:
         for code in feed[src]:
             for path in feed[src][code]:
@@ -93,37 +125,35 @@ def feed(username):
                     'item': feed[src][code][path],
                 })
 
+    headers = {'Content-Type': 'application/xml'}
     items.sort(key=lambda item: item['item']['to'], reverse=True)
-    return render_template('feed.xml', username=username, items=items)
+    return render_template('feed.xml', username=username, items=items), 200, headers
 
 
-@app.route('/app/<username>/redirect')
-def redirect():
+@app.route('/app/<username>/read')
+def read(username):
     query = request.args.to_dict()
     if not user_exist(username):
-        abort(404)
+        abort(400)
     args = ['src', 'code', 'path', 'from', 'to', 'hash']
     for arg in args:
         if arg not in query:
-            return redirect(url_for('index'))
+            abort(400)
 
-    digest = item_hash(username, args=(args['src'], args['code'], args['path'], args['from'], args['to']))
-    if digest != args['hash']:
+    digest = item_hash(username, args=(query['src'], query['code'], query['path'], query['from'], query['to']))
+    if digest != query['hash']:
         return redirect(url_for('index'))
 
-    if args['src'] == 'pages':
-        url = EDUX + '/courses/' + args['path'] + '/start'
-
+    url = EDUX + '/courses/' + query['path']
+    if query['src'] == 'media':
+        diff = False
+    elif query['src'] == 'pages':
         diff = True
-        if 'target' in args and args['target'] == 'current':
+        if 'target' in query and query['target'] == 'current':
             diff = False
         if diff:
             url = url + '?do=diff&rev2[]={}&rev2[]={}'
-            url = url.format(args['from'], args['to'])
-
-    elif args['src'] == 'media':
-        diff = False
-        url = EDUX + '/courses/' + args['path']
+            url = url.format(query['from'], query['to'])
 
     item_markread(username, query, diff)
     return redirect(url)
