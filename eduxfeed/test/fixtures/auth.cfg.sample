@@ -1,0 +1,15 @@
+[edux]
+username = u$ername
+password = pa$$word
+
+[api]
+# service app
+username = <client_id>
+password = <client_secret>
+
+[oauth]
+# web app
+username = <client_id>
+password = <client_secret>
+callback = <callback_url>
+
