@@ -5,8 +5,10 @@ from .auth import AUTH, EDUX
 from .auth import auth
 
 import re
+from datetime import datetime
 
 import requests
+from jinja2 import Markup
 from flask import Flask, render_template, url_for, request, redirect, abort
 
 
@@ -162,7 +164,7 @@ def read(username):
 @app.template_filter('path')
 def filter_path(path):
     path = re.sub('/(start)?$', '', path)
-    path = re.sub('^.*?/', '', path)
+    path = re.sub('^[^/]+(/_media)?/', '', path)
     # if root namespace, then 'code' remains:
     # MI-PYT/lectures/start => lectures
     # MI-PYT/lectures => lectures
@@ -171,6 +173,19 @@ def filter_path(path):
     # MI-PYT => MI-PYT
 
     return path
+
+
+@app.template_filter('updated')
+def filter_updated(timestamp):
+    return datetime.fromtimestamp(int(timestamp)).strftime('%Y-%m-%dT%H:%M:%S')
+
+
+@app.template_filter('uniq')
+def filter_uniq(item):
+    detail = item['item']
+    args = (item['code'], item['path'], str(detail['from']), str(detail['to']))
+
+    return ':'.join(args)
 
 
 @app.template_filter('author')
@@ -208,18 +223,26 @@ def filter_sort(details):
 
 
 @app.template_filter('link')
-def filter_link(item, username, target=None):
-    # preserve order
+def filter_link(item, username, target=None, escape=True):
     params = [
+        # preserve order
         ('src', item['src']),
         ('code', item['code']),
         ('path', item['path']),
-        ('from', item['item']['from']),
-        ('to', item['item']['to']),
+        ('from', str(item['item']['from'])),
+        ('to', str(item['item']['to'])),
         ('hash', item['item']['hash']),
     ]
     if target:
         params.append(('target', target))
 
-    req = requests.Request('GET', url_for('redirect', username=username), params=params)
-    return req.prepare().url
+    # requests performs url encoding, '/' => %2F
+    # create url manually, http://stackoverflow.com/a/23497903
+    # req = requests.Request('GET', url_for('read', username=username, _external=True), params=params)
+    # return Markup(req.prepare().url)
+
+    # '&' apperently breaks feed
+    amp = '&amp;' if escape else '&'
+    params = amp.join(['='.join(param) for param in params])
+    url = url_for('read', username=username, _external=True)
+    return Markup('{}?{}'.format(url, params))
