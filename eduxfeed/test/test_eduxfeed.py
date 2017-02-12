@@ -1,16 +1,32 @@
-from eduxfeed.auth import EDUX
-from eduxfeed import appweb
+from eduxfeed.auth import AUTH_FILE, EDUX
 from eduxfeed import auth
+from eduxfeed import appweb
+from eduxfeed import appcode
+from eduxfeed.update import edux_page_prev, edux_feed_last
 
 import os
 import re
+from datetime import datetime
+
 import requests
 from bs4 import BeautifulSoup
 
 import pytest
+import flexmock
 
 
-AUTH = 'eduxfeed/test/fixtures/auth.cfg.sample'
+FIXTURES = os.path.join(os.path.dirname(__file__), 'fixtures')
+
+AUTH_SAMPLE = os.path.join(FIXTURES, 'auth.cfg.sample')
+AUTH = AUTH_FILE if auth.auth() else AUTH_SAMPLE
+
+OPEN = {
+    'mode': 'r',
+    'encoding': 'utf-8',
+}
+
+
+# TEST AUTH
 
 
 @pytest.mark.parametrize(
@@ -27,16 +43,59 @@ def test_config_fail():
         auth.auth('non-existent-section', AUTH)
 
 
+def skip_auth(auth_file):
+    if auth_file == AUTH_SAMPLE:
+        pytest.skip('test only using real credentials')
+
+
+@pytest.mark.parametrize(
+    ['session_creator', 'should_fail'],
+    [
+        (requests.Session, True),
+        (auth.session_edux, False),
+    ],
+)
+def test_session_edux(session_creator, should_fail):
+    skip_auth(AUTH)
+    username, password = auth.auth(target='edux')
+    session = session_creator()
+    r = session.get(EDUX)
+    r.raise_for_status()
+    parser = BeautifulSoup(r.text, 'html.parser')
+    div = parser.find('div', {'class': 'user'})
+    text = div.text.strip()
+    if should_fail:
+        assert not len(text) > 0
+        assert not re.search(username, text)
+    else:
+        assert len(text) > 0
+        assert re.search(username, text)
+
+
+def test_session_api():
+    skip_auth(AUTH)
+    username, password = auth.auth(target='api')
+    session = auth.session_api(username, password)
+    assert 'Authorization' in session.headers
+
+
+# TEST APPCODE
+
+
 @pytest.mark.parametrize(
     ['files', 'valid'],
     [
         (('.dotfile', '_file', 'also_file', 'file_'), 0),
-        (('dotfile.', 'normal.txt'), 2),
+        (('user0.txt', 'user1.txt', 'user2.txt'), 3),
+        (('user0.txt', 'user1.txt', 'user2.py'), 2),
+        (('dotfile.', 'normal.txt'), 1),
+        ((), 0),
     ],
 )
-def test_db(files, valid):
-    # test user_list
-    users = [f.split('.')[0] for f in files if not (re.search('_', f) or re.match('\.', f))]
+def test_user_list(files, valid):
+    # update according to db.user_list
+    users = [f.split('.txt')[0] for f in files if not (re.search('_', f) or re.match('\.', f))]
+    users = [u for u in users if re.match('^[a-z0-9]+$', u)]
     assert len(users) == valid
 
 
@@ -61,305 +120,499 @@ def test_filter_path(path, output):
     assert f(path) == output
 
 
-ITEM = {
-    'src': 'SRC',
-    'code': 'CODE',
-    'path': 'PATH',
-    'item': {
-        'from': 123,
-        'to': 321,
-        'hash': 'HASH',
-    }
-}
 @pytest.mark.parametrize(
     ['target', 'escape'],
     [(t, e) for t in ('TARGET', None) for e in (True, False)],
 )
-def _test_filter_link(target, escape):
-    f = appweb.filter_link
-    link = str(f(ITEM, 'USERNAME', target, escape))
-    assert re.match('http', link)
-    # assert len(link.split('?')) == 2
-    path, query = link.split('?')
-    # assertion based on current logic
-    assert re.search('USERNAME', path)
-    assert '&' in query
-    if escape:
-        assert re.search('&[a-z]+;')
-    if target:
-        assert re.search('target={}$'.format(target))
-    for k, v in ITEM.items():
-        if type(v) is not dict:
-            assert '{}={}'.format(k, v) in query
-        else:
-            for kk, vv in v.items():
-                assert '{}={}'.format(kk, vv) in query
+def test_filter_link(target, escape):
+    ITEM = {
+        'src': 'SRC',
+        'code': 'CODE',
+        'path': 'PATH',
+        'item': {
+            'from': 123,
+            'to': 321,
+            'hash': 'HASH',
+        }
+    }
+    with appweb.app.test_request_context():
+        link = str(appweb.filter_link(ITEM, 'USERNAME', target, escape))
+        assert re.match('http', link)
+        # assert len(link.split('?')) == 2
+        path, query = link.split('?')
+        # assertion based on current logic
+        assert re.search('USERNAME', path)
+        assert '&' in query
+        if escape:
+            assert re.search('&[a-z]+;', query)
+        if target:
+            assert re.search('target={}$'.format(target), query)
+        for k, v in ITEM.items():
+            if type(v) is not dict:
+                assert '{}={}'.format(k, v) in query
+            else:
+                for kk, vv in v.items():
+                    assert '{}={}'.format(kk, vv) in query
 
 
-def user_update(username, config, courses):
-    user = db.user_config(username)
-    feed = db.user_feed(username)
+@pytest.mark.parametrize(
+    ['update', 'current'],
+    [(x, y) for x in ({}, {'key': True}, {'key': False}) for y in ({}, {'key': True}, {'key': False})],
+)
+def test_user_update_key(update, current):
+    # update according to appcode.user_update
+    key = 'key'
+    if key in update:
+        current[key] = True
+    elif current.get(key, True):
+        # key disabled
+        assert key not in update and current.get(key, True)
+        current[key] = False
 
-    if 'media' in config:
-        user['FEED']['media'] = str(int(True))
-    elif user['FEED'].getboolean('media', fallback=True):
-        # 'media' disabled
-        user['FEED']['media'] = str(int(False))
-        try:
-            del feed['media']
-        except:
-            pass
-
-    if 'en' in config:
-        user['FEED']['en'] = str(int(True))
-    elif user['FEED'].getboolean('en', fallback=False):
-        # 'en' disabled
-        user['FEED']['en'] = str(int(False))
-        try:
-            for course in feed['pages']:
-                for path in feed['pages'][course]:
-                    if re.match('[^/]+/en/', path):
-                        del feed['pages'][course][path]
-                if not feed['pages'][course]:
-                    del feed['pages'][course]
-            if not feed['pages']:
-                del feed['pages']
-
-            for course in feed['media']:
-                for path in feed['media'][course]:
-                    if re.match('[^/]+/_media/en/', path):
-                        del feed['media'][course][path]
-            if not feed['media'][course]:
-                    del feed['media'][course]
-            if not feed['media']:
-                del feed['media']
-        except:
-            pass
-
-    # deleted courses
-    for course in user['COURSES']:
-        if course not in courses:
-            del user['COURSES'][course]
-            try:
-                del feed['pages'][course]
-                del feed['media'][course]
-            except:
-                pass
-
-    # added courses
-    courses_all = db.edux_pages()['COURSES']
-    for course in courses:
-        if course not in user['COURSES']:
-            user['COURSES'][course] = courses_all[course]
-
-    db.user_feed_set(username, feed)
-    db.user_config_set(username, user)
+    if key in update:
+        assert current[key]
+    else:
+        assert not current[key]
 
 
-def item_markread(username, item, diff):
-    feed = db.user_feed(username)
+@pytest.mark.parametrize(
+    ['dict_in', 'dict_out'],
+    [
+        # 1
+        ({
+            'key': {
+                'course': {
+                    'NON-MATCH': [0, ()],
+                    'MATCHthat': 'string',
+                    'MATCHpath': {'int': 1, 'list': [], 'dict': {}},
+                },
+                'non': {'NON-MATCH': []},
+                'yep': {'MATCH': 'M'},
+                'nope': {},
+            }
+        }, {
+            'key': {
+                'course': {
+                    'NON-MATCH': [0, ()],
+                },
+                'non': {'NON-MATCH': []},
+            }
+        }),
 
+        # 2
+        ({
+            'key': {
+                'course': {
+                    'NON-MATCH': 0,
+                },
+                'non': {'NON-MATCH': []},
+            }
+        }, {
+            'key': {
+                'course': {
+                    'NON-MATCH': 0,
+                },
+                'non': {'NON-MATCH': []},
+            }
+        }),
+
+        # 3
+        ({
+            'key': {
+                0: {'MATCH': 1},
+                1: {'MATCHagain': ()},
+            },
+            'src': {
+                2: {'MATCH': 'match'},
+            }
+        }, {
+            'key': {},
+            'src': {},
+        }),
+
+        # 4
+        ({
+            'non-key': {
+                0: {'MATCH': 1},
+            },
+            'src': {},
+        }, {
+            'non-key': {
+                0: {'MATCH': 1},
+            },
+            'src': {},
+        }),
+    ]
+)
+def test_user_update_dict(dict_in, dict_out):
+    # update according to appcode.user_update
+    feed = dict_in
+    for src in ('src', 'key'):
+        if src in feed:
+            delete = {}
+            for course in feed[src]:
+                delete[course] = []
+                for path in feed[src][course]:
+                    if re.match('MATCH', path):
+                        delete[course].append(path)
+            for course in delete:
+                for key in delete[course]:
+                    del feed[src][course][key]
+                if not feed[src][course]:
+                    del feed[src][course]
+
+    assert dict_in == dict_out
+
+
+@pytest.mark.parametrize(
+    ['dict_in', 'item', 'dict_out'],
+    [
+        # 1
+        ({
+            'from': 10,
+            'to': 20,
+            'updates': {
+                15: 'whatever',
+                20: 'current',
+            }
+        }, {'to': 15}, {
+            'from': 15,
+            'to': 20,
+            'updates': {
+                20: 'current',
+            }
+        }),
+
+        # 2
+        ({
+            'from': 10,
+            'to': 20,
+            'updates': {
+                15: 'whatever',
+                20: 'current',
+            }
+        }, {'to': 14}, {
+            'from': 14,
+            'to': 20,
+            'updates': {
+                15: 'whatever',
+                20: 'current',
+            }
+        }),
+
+        # 3
+        ({
+            'from': 10,
+            'to': 20,
+            'updates': {
+                15: 'whatever',
+                20: 'current',
+            }
+        }, {'to': 1}, {
+            'from': 10,
+            'to': 20,
+            'updates': {
+                15: 'whatever',
+                20: 'current',
+            }
+        }),
+
+        # 4
+        ({
+            'from': 10,
+            'to': 20,
+            'updates': {
+                15: 'whatever',
+                20: 'current',
+            }
+        }, {'to': 20}, {
+            # remove
+        }),
+    ]
+)
+def test_item_markread(dict_in, item, dict_out):
+    # update according to appcode.item_markread
+    item.update({'src': 0, 'code': 1, 'path': 2})
+    if dict_out:
+        dict_out = {0: {1: {2: dict_out}}}
+    dict_in = {0: {1: {2: dict_in}}}
+    feed = dict_in
+
+    skip = False
     try:
         src = feed[item['src']]
         code = src[item['code']]
         path = code[item['path']]
     except:
         # already deleted from feed
-        return
+        skip = True
 
-    to = int(item['to'])
-    if to == path['to'] or not diff:
-        # remove item completely
-        # possible cascade delete
-        del code[item['path']]
-        if not code:
-            del src[item['code']]
-        if not src:
-            del feed[item['src']]
-    else:
-        # feed has new updates
-        for timestamp in path['updates']:
-            if not timestamp > to:
-                del path['updates'][timestamp]
-        path['from'] = to
-
-        digest = item_hash(username, args=(item['src'], item['code'], item['path'], path['from'], path['to']))
-        path['hash'] = digest
-
-    db.user_feed_set(username, feed)
-
-
-def edux_check_pages(course, session, authors, timestamp):
-    try:
-        r = session.get(FEED.format(course=course), params=FEED_PARAMS)
-        r.raise_for_status()
-    except:
-        return None
-
-    last = edux_feed_last(r.text)
-    if timestamp is None:
-        # init only
-        return last
-    if not last > timestamp:
-        return None
-
-    items = {}
-    parser = BeautifulSoup(r.text, 'html.parser')
-    entries = parser.find_all('entry')
-    for entry in entries:
-        # sorted from newest (thus, highest timestamp)
-        # https://www.dokuwiki.org/syndication#item_sorting
-        link = entry.link['href']
-        rev = int(re.search('\?.*rev=(\d+)', link).group(1))
-        if not rev > timestamp:
-            break
-        link = re.sub('^.*?/courses/', EDUX + '/courses/', link)
-        path = re.sub('^.*?/courses/', '', link)
-        path = re.sub('\?.*$', '', path)
-        # course code has to be present
-        # e.g. PDD.16 redirects to PDD, thus different code and start of path
-        if re.match('[^/]+/classification/student/', path) or re.match('[^/]+/student/', path):
-            continue
-
-        items[rev] = {}
-        item = items[rev]
-        item['path'] = {
-            'path': path,
-            'link': link,
-        }
-
-        date, time = entry.published.text.split('T')
-        prev = edux_page_prev(path, session, timestamp) if timestamp > 0 else rev
-        item['time'] = {
-            'date': date,
-            'time': time[:5],
-            'timestamp': rev,
-            'prev': prev,
-        }
-
-        username = entry.author.text.strip()
-        if username not in authors:
-            name = edux_author(username, session=None)
-            if name:
-                authors[username] = {}
-                # preserve order in case of config
-                authors[username]['first'] = name['first']
-                authors[username]['last'] = name['last']
-
-        if username not in authors:
-            item['author'] = {
-                'username': username,
-            }
+    if not skip:
+        to = int(item['to'])
+        if to == path['to']:
+            # remove item completely
+            # possible cascade delete
+            del code[item['path']]
+            if not code:
+                del src[item['code']]
+            if not src:
+                del feed[item['src']]
         else:
-            item['author'] = {
-                'username': username,
-                'first': authors[username]['first'],
-                'last': authors[username]['last'],
-            }
+            # feed has new updates
+            delete = []
+            for timestamp in path['updates']:
+                if not timestamp > to:
+                    delete.append(timestamp)
+            for key in delete:
+                del path['updates'][key]
+            if path['from'] < to:
+                path['from'] = to
 
-    return items
-
-
-def edux_check_media(course, session):
-    items = {}
-    media = db.edux_media(course)
-    ajax = AJAX.format(course=course)
-
-    # possible redirect on POST
-    # e.g. BI-3DT.1 => BI-3DT
-    r = session.get(ajax)
-    ajax = r.request.url
-
-    namespaces = ['']
-    d = deque(namespaces)
-    data = {'call': 'medians'}
-    while len(d):
-        data['ns'] = d.popleft()
-        try:
-            r = session.post(ajax, data=data)
-            r.raise_for_status()
-        except:
-            # e.g. non-existent course MI-SPI-1
-            continue
-        parser = BeautifulSoup(r.text, 'html.parser')
-        for a in parser.find_all('a'):
-            ns = a['href'].split('=')[-1]
-            # re.search('mailto', ns) if error passed
-            namespaces.append(ns)
-            d.append(ns)
-
-    data = {'call': 'medialist'}
-    for ns in namespaces:
-        data['ns'] = ns
-        r = session.post(ajax, data=data)
-        parser = BeautifulSoup(r.text, 'html.parser')
-        for div in parser.find_all('div', {'class': ['even', 'odd']}):
-            link = div.find(lambda tag: tag.name == 'a' and tag.has_attr('href'))['href']
-            # link to full -- compatibility with pages
-            link = re.sub('^.*?/courses/', EDUX + '/courses/', link)
-            path = re.sub('^.*?/courses/', '', link)
-            if re.match('[^/]+/_media/student/', path):
-                continue
-            info = div.span.i
-            date, time = info.text.replace('/', '-').split(' ')
-            size, unit = info.next_sibling.string.strip('( )').split(' ')
-            timestamp = int(datetime.strptime('{} {}'.format(date, time), '%Y-%m-%d %H:%M').timestamp())
-            if path not in media[course] or int(media[course][path]) < timestamp:
-                items[path] = {
-                    'path': {
-                        'path': path,
-                        'link': link,
-                    },
-                    'time': {
-                        'date': date,
-                        'time': time,
-                        'timestamp': timestamp,
-                    },
-                    'info': {
-                        'size': size,
-                        'unit': unit,
-                        'new': path not in media[course],
-                    },
-                }
-                media[course][path] = str(timestamp)
-
-    db.edux_media_set(course, media)
-    return items
+    assert dict_in == dict_out
 
 
-def edux_page_prev(path, session, timestamp):
-    url = '{edux}/courses/{path}?do=revisions'
-    try:
-        r = session.get(url.format(edux=EDUX, path=path))
-        r.raise_for_status()
-    except:
-        # need to return actual timestamp
-        # behaves as a newly created page
-        return int(timestamp)
+@pytest.mark.parametrize(
+    ['path', 'should_match'],
+    [
+        ('MI-PYT/classification', False),
+        ('MI-PYT/classification/', False),
+        ('MI-PYT/classification/en', False),
+        ('MI-PYT/classification/en/', False),
+        ('MI-PYT/classification/student', False),
+        ('MI-PYT/classification/student/', True),
+        ('MI-PYT/classification/en/student', False),
+        ('MI-PYT/classification/en/student/', True),
+        ('MI-PYT/classification/student/username', True),
+        ('MI-PYT/classification/en/student/username/', True),
+        ('MI-PYT/classification/view/fulltime', True),
+        ('MI-PYT/classification/view/', True),
+        ('MI-PYT/classification/view', False),
+        ('/classification/student/', False),
+        # beware, should not happen, however
+        ('classification/student/', True),
+        ('/classification/view/', False),
+        ('classification/view/', False),
+        ('/classification/en/', False),
+        ('classification/en/', False),
+        ('MI-PYT/en', False),
+        ('MI-PYT/en/', False),
+        ('MI-PYT/student', False),
+        ('MI-PYT/student/', True),
+        ('MI-PYT/en/student', False),
+        ('MI-PYT/en/student/', True),
+        ('MI-PYT/student/username', True),
+        ('MI-PYT/student/username/', True),
+        ('MI-PYT/en/student/username', True),
+        ('MI-PYT/en/student/username/', True),
+        ('MI-PYT/cs/student/username/', False),
+        ('MI-PYT/student/username/namespace', True),
+        ('MI-PYT/en/student/username/namespace', True),
+    ],
+)
+def test_regex_ignored(path, should_match):
+    # update according to update.edux_check_pages
+    # and possibly update.edux_check_media if different pattern
+    if (re.match('[^/]+/classification/(en/)?student/', path) or
+        re.match('[^/]+/classification/view/', path) or
+        re.match('[^/]+/(en/)?student/', path)):
+        # PEP 8 inconclusive about this indent
+        assert should_match
+    else:
+        assert not should_match
 
-    prev = int(timestamp)
-    parser = BeautifulSoup(r.text, 'html.parser')
-    for revision in parser.find_all('input', {'name': 'rev2[]'}):
-        # last revision named 'current'
-        try:
-            rev = int(revision['value'])
-            if rev <= prev:
-                prev = rev
-                break
-        except:
-            continue
 
-    return prev
+@pytest.mark.parametrize(
+    ['link', 'expected_link', 'expected_path', 'expected_rev'],
+    [
+        (
+            'https://edux.fit.cvut.cz/courses/MI-PYT/tutorials/01_requests_click?rev=1485603601',
+            EDUX + '/courses/MI-PYT/tutorials/01_requests_click?rev=1485603601',
+            'MI-PYT/tutorials/01_requests_click',
+            1485603601,
+
+        ),
+        (
+            '/courses/MI-PYT/tutorials/01_requests_click?rev=1485603601',
+            EDUX + '/courses/MI-PYT/tutorials/01_requests_click?rev=1485603601',
+            'MI-PYT/tutorials/01_requests_click',
+            1485603601,
+        ),
+        (
+            '/courses/MI-PYT?rev=1485603601',
+            EDUX + '/courses/MI-PYT?rev=1485603601',
+            'MI-PYT',
+            1485603601,
+        ),
+        (
+            '/courses/MI-PYT/whatever?nonrev=123',
+            EDUX + '/courses/MI-PYT/whatever?nonrev=123',
+            'MI-PYT/whatever',
+            None,
+        ),
+        (
+            '/courses/MI-PYT/whatever?rev=abc',
+            EDUX + '/courses/MI-PYT/whatever?rev=abc',
+            'MI-PYT/whatever',
+            None,
+        ),
+    ],
+)
+def test_regex_links(link, expected_link, expected_path, expected_rev):
+    # update according to update.edux_check_pages
+    # and possibly update.edux_check_media if different pattern
+    link = re.sub('^.*?/courses/', EDUX + '/courses/', link)
+    path = re.sub('^.*?/courses/', '', link)
+    path = re.sub('\?.*$', '', path)
+    assert link == expected_link
+    assert path == expected_path
+    if expected_rev is None:
+        with pytest.raises(AttributeError):
+            rev = int(re.search('\?(.+&)?rev=(\d+)', link).group(2))
+    else:
+        rev = int(re.search('\?(.+&)?rev=(\d+)', link).group(2))
+        assert rev == expected_rev
 
 
-def edux_feed_last(feed):
-    parser = BeautifulSoup(feed, 'html.parser')
-    try:
-        # sorted from newest
-        # https://www.dokuwiki.org/syndication#item_sorting
-        link = parser.entry.link['href']
-        rev = re.search('\?.*rev=(\d+)', link).group(1)
-        return int(rev)
-    except:
-        return 0
+# TEST PARSING
 
+
+def fixture_files(target):
+    targets = {
+        'edux': 'edux[^_]',
+        'feeds': 'edux_feed',
+        'revisions': 'edux_rev',
+        'courses': 'edux_courses',
+        'ajax_req': 'edux_ajax_req',
+        'ajax_res': 'edux_ajax_res',
+    }
+    pattern = targets[target]
+    files = [f for f in os.listdir(FIXTURES) if os.path.isfile(os.path.join(FIXTURES, f))]
+    files = [os.path.join(FIXTURES, f) for f in files if re.match(pattern, f)]
+    return files
+
+
+@pytest.fixture(params=fixture_files('ajax_req'))
+def ajax_fixture_req(request):
+    file = request.param
+    with open(file, **OPEN) as f:
+        markup = f.read()
+        yield markup
+
+
+def test_ajax_req(ajax_fixture_req):
+    # update according to update.edux_check_media
+    namespaces = []
+    markup = ajax_fixture_req
+    parser = BeautifulSoup(markup, 'html.parser')
+    for a in parser.find_all('a'):
+        ns = a['href'].split('=')[-1]
+        namespaces.append(ns)
+
+    assert len(namespaces) == len(parser.find_all('a'))
+    for namespace in namespaces:
+        assert re.match('^[\w\d/]+$', namespace)
+
+
+@pytest.fixture(params=fixture_files('ajax_res'))
+def ajax_fixture_res(request):
+    file = request.param
+    with open(file, **OPEN) as f:
+        markup = f.read()
+        yield markup
+
+
+def test_ajax_res(ajax_fixture_res):
+    # update according to update.edux_check_media
+    markup = ajax_fixture_res
+    parser = BeautifulSoup(markup, 'html.parser')
+    for div in parser.find_all('div', {'class': ['even', 'odd']}):
+        info = div.span.i
+        # implicit assertion about proper expansion
+        date, time = info.text.replace('/', '-').split(' ')
+        size, unit = info.next_sibling.string.strip('( )').split(' ')
+        timestamp = int(datetime.strptime('{} {}'.format(date, time), '%Y-%m-%d %H:%M').timestamp())
+        for item in (date, time, size, unit):
+            assert item and item == item.strip()
+        assert re.match('^\w+$', unit)
+        assert re.match('^\d+([.,]\d+)?$', size)
+        assert re.match('^\d+$', str(timestamp))
+
+
+@pytest.fixture(params=fixture_files('edux'))
+def edux_fixture(request):
+    file = request.param
+    with open(file, **OPEN) as f:
+        markup = f.read()
+        yield markup
+
+
+@pytest.fixture(params=fixture_files('courses'))
+def edux_courses(request):
+    file = request.param
+    with open(file, **OPEN) as f:
+        courses = [c.strip() for c in f.readlines()]
+        courses = [c for c in courses if c and c[0] != '#']
+        yield courses
+
+
+def test_edux_courses(edux_fixture, edux_courses):
+    # update according to init.edux_courses
+    parser = BeautifulSoup(edux_fixture, 'html.parser')
+    courses = []
+    for div in parser.find_all('div', {'class': 'courselist_field'}):
+        table = div.table
+        if table:
+            for course in table.find_all('a'):
+                code = course.text.strip()
+                # no BIK- subjects and alike / TV course / MI-SPI-1
+                if re.match('[^-]+K-', code) or len(code.split('-')) != 2:
+                    continue
+                courses.append(code)
+
+    assert sorted(courses) == sorted(edux_courses)
+
+
+@pytest.fixture(params=fixture_files('feeds'))
+def feed_fixture(request):
+    file = request.param
+    with open(file, **OPEN) as f:
+        markup = f.read()
+        result = int(file.split('_')[-1].split('.')[0])
+        yield markup, result
+
+
+def test_edux_feed_last(feed_fixture):
+    feed, timestamp = feed_fixture
+    last = edux_feed_last(feed)
+    assert type(last) is int
+    assert last == timestamp
+
+
+@pytest.fixture(params=fixture_files('revisions'))
+def rev_fixture(request):
+    file = request.param
+    with open(file, **OPEN) as f:
+        markup = f.read()
+        yield markup
+
+
+@pytest.mark.parametrize(
+    ['challenge', 'expected'],
+    [
+        # fixtures/edux_timestamps.txt
+        # 1485882442 > 1485861739 > 1456087220 > ... > 1266103802
+        (1485882442 + 1, 1485882442),
+        (1485882442 + 0, 1485882442),
+        (1485882442 - 1, 1485861739),
+        (1485861739 + 1, 1485861739),
+        (1485861739 + 0, 1485861739),
+        (1485861739 - 1, 1456087220),
+        (1266103802 + 1, 1266103802),
+        (1266103802 + 0, 1266103802),
+        (1266103802 - 1, 1266103802 - 1),
+    ]
+)
+def test_edux_page_prev(rev_fixture, challenge, expected):
+    session = flexmock(get=flexmock(raise_for_status=lambda: None, text=rev_fixture))
+    result = edux_page_prev('whatever', session, challenge)
+    assert result == expected
