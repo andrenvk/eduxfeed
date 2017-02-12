@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- generator="FeedCreator 1.7.2-ppt DokuWiki" -->
+<?xml-stylesheet href="https://edux.fit.cvut.cz/courses/BI-PA2/lib/exe/css.php?s=feed" type="text/css"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>BI-PA2 Programování a algoritmizace 2</title>
+    <subtitle></subtitle>
+    <link rel="alternate" type="text/html" href="https://edux.fit.cvut.cz/courses/BI-PA2/"/>
+    <id>https://edux.fit.cvut.cz/courses/BI-PA2/</id>
+    <updated>2017-02-08T21:19:41+01:00</updated>
+    <generator>FeedCreator 1.7.2-ppt DokuWiki</generator>
+<link rel="self" type="application/atom+xml" href="https://edux.fit.cvut.cz/courses/BI-PA2/feed.php" />
+    <entry>
+        <title>1. Jazyk C++, některá rozšíření oproti C</title>
+        <link rel="alternate" type="text/html" href="https://edux.fit.cvut.cz/courses/BI-PA2/lectures/01/start?rev=1485882565"/>
+        <published>2017-01-31T18:09:25+01:00</published>
+        <updated>2017-01-31T18:09:25+01:00</updated>
+        <id>https://edux.fit.cvut.cz/courses/BI-PA2/lectures/01/start?rev=1485882565</id>
+        <author>
+            <name>vogeljos</name>
+        </author>
+        <summary>[Organizace výuky 2016-17]
+
+
+
+
+Standardní datové proudy (bezpečnější vstupní a výstupní konverze], 
+přetěžování funkcí, 
+implicitní hodnoty parametrů funkcí,
+inline funkce,
+parametry typu reference,
+deklarace konstanty,
+operátory new a delete.</summary>
+    </entry>
+    <entry>
+        <title>BIE-PA2 - Programming and algorithmic 2</title>
+        <link rel="alternate" type="text/html" href="https://edux.fit.cvut.cz/courses/BI-PA2/en/start?rev=1485861589"/>
+        <published>2017-01-31T12:19:49+01:00</published>
+        <updated>2017-01-31T12:19:49+01:00</updated>
+        <id>https://edux.fit.cvut.cz/courses/BI-PA2/en/start?rev=1485861589</id>
+        <author>
+            <name>xvagner</name>
+        </author>
+        <summary>Lectures: Jan Trávníček, travnja3@fit.cvut.cz
+
+Proseminars: Jan Trávníček, travnja3@fit.cvut.cz
+
+Seminars: David Bernhauer (bernhdav@fit.cvut.cz), Roman Jelínek (jelinro4@fit.cvut.cz)
+
+Login is required to access course materials!</summary>
+    </entry>
+    <entry>
+        <title>Seminar project, PA2</title>
+        <link rel="alternate" type="text/html" href="https://edux.fit.cvut.cz/courses/BI-PA2/en/semestralka?rev=1485802159"/>
+        <published>2017-01-30T19:49:19+01:00</published>
+        <updated>2017-01-30T19:49:19+01:00</updated>
+        <id>https://edux.fit.cvut.cz/courses/BI-PA2/en/semestralka?rev=1485802159</id>
+        <author>
+            <name>xvagner</name>
+        </author>
+        <summary>Seminar project is mandatory in PA2. Three problem are offered from mid March, students are supposed to choose one topic. 
+
+The solution of the problem is a program in C++, the problem must be solves using OO techniques (encapsulation, inheritance, polymorphism). 
+The expected extent of your seminar project is 1000-3000 source code lines.</summary>
+    </entry>
+    <entry>
+        <title>Classification in BIE-PA2</title>
+        <link rel="alternate" type="text/html" href="https://edux.fit.cvut.cz/courses/BI-PA2/en/classification/start?rev=1485800876"/>
+        <published>2017-01-30T19:27:56+01:00</published>
+        <updated>2017-01-30T19:27:56+01:00</updated>
+        <id>https://edux.fit.cvut.cz/courses/BI-PA2/en/classification/start?rev=1485800876</id>
+        <author>
+            <name>xvagner</name>
+        </author>
+        <summary>The classification consists of two parts:
+
+
+Assessment in the semester
+
+
+Up to 62 points may be awarded in the semester:
+
+ Activity   nominal points  minimum points  Homework (7x)    35    -   Contest homework    up to 15    -   Quiz (3x)    10    -   Seminary project    12    5   Seminar activities    5    -  
+Note: points for seminar activities (e.g. seminar assignments) are awarded by seminar teachers, details will be specified by the seminar teacher.</summary>
+    </entry>
+</feed>

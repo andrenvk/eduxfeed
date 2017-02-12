@@ -1,0 +1,546 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="cs"
+ lang="cs" dir="ltr">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>
+    1. Jazyk C++, některá rozšíření oproti C    [BI-PA2 Programování a algoritmizace 2]
+  </title>
+
+  <meta name="generator" content="DokuWiki snapshot? unknown" />
+<meta name="robots" content="noindex,nofollow" />
+<link rel="search" type="application/opensearchdescription+xml" href="/courses/BI-PA2/lib/exe/opensearch.php" title="BI-PA2 Programování a algoritmizace 2" />
+<link rel="start" href="/courses/BI-PA2/" />
+<link rel="contents" href="/courses/BI-PA2/lectures/01/start?do=index" title="Index" />
+<link rel="alternate" type="application/rss+xml" title="Recent Changes" href="/courses/BI-PA2/feed.php" />
+<link rel="alternate" type="application/rss+xml" title="Current Namespace" href="/courses/BI-PA2/feed.php?mode=list&amp;ns=lectures:01" />
+<link rel="alternate" type="text/html" title="Plain HTML" href="/courses/BI-PA2/_export/xhtml/lectures/01/start" />
+<link rel="stylesheet" media="all" type="text/css" href="/courses/BI-PA2/lib/exe/css.php?s=all&amp;t=edux&amp;tseed=1475304632" />
+<link rel="stylesheet" media="screen" type="text/css" href="/courses/BI-PA2/lib/exe/css.php?t=edux&amp;tseed=1475304632" />
+<link rel="stylesheet" media="print" type="text/css" href="/courses/BI-PA2/lib/exe/css.php?s=print&amp;t=edux&amp;tseed=1475304632" />
+
+<script type="text/javascript" charset="utf-8" src="/courses/BI-PA2/lib/exe/js.php?tseed=1475304632" ></script>
+<script type="text/x-mathjax-config" charset="utf-8" ><!--//--><![CDATA[//><!--
+//MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+//MathJax.Hub.Config({  TeX: { equationNumbers: {autoNumber: "all"} } });
+MathJax.Hub.Config({
+	tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+	TeX: { 
+		equationNumbers: {autoNumber: "AMS"},
+		extensions: ["AMSmath.js", "AMSsymbols.js"]
+	} 
+});
+
+//--><!]]></script>
+<script type="text/javascript" charset="utf-8" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" ></script>
+<script type="text/javascript" charset="utf-8" src="/courses/BI-PA2/lib/plugins/indexmenu/jsmenu/usrmenu.js" ></script>
+<script type="text/javascript" charset="utf-8" src="/courses/BI-PA2/lib/plugins/indexmenu/indexmenu.js" ></script>
+<script type="text/javascript" charset="utf-8" ><!--//--><![CDATA[//><!--
+var indexmenu_ID='lectures/01/start'
+//--><!]]></script>
+<script type="text/javascript" charset="utf-8" ><!--//--><![CDATA[//><!--
+jQuery.noConflict();
+
+//--><!]]></script>
+<script type="text/javascript" charset="utf-8" src="https://www.google.com/jsapi" ></script>
+<script type="text/javascript" charset="utf-8" src="/courses/BI-PA2/lib/plugins/anketa/scripts/results.js" ></script>
+<script type="text/javascript" charset="utf-8" src="/courses/BI-PA2/lib/plugins/anketa/scripts/anketa.js" ></script>
+<script type="text/javascript" charset="utf-8" src="/courses/BI-PA2/lib/plugins/anketa/scripts/voting.js" ></script>
+<script type="text/javascript" charset="utf-8" src="/courses/BI-PA2/lib/plugins/anketa/scripts/editing_template.js" ></script>
+<script type="text/javascript" charset="utf-8" src="/courses/BI-PA2/lib/plugins/harmonogram/harmonogram.js" ></script>
+
+  <link rel="shortcut icon" href="/courses/BI-PA2/lib/tpl/edux/images/favicon-cvut.ico" />
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+	var pageTracker = _gat._getTracker("UA-10844012-1");
+	pageTracker._trackPageview();
+} catch(err) {}
+</script></head>
+
+<body>
+<div class="dokuwiki">
+  
+  <div class="stylehead">
+
+    <div class="header">
+      <div class="logo">
+        <a href="/courses/BI-PA2/"  name="dokuwiki__top" id="dokuwiki__top"  accesskey="h" title="[ALT+H]">BI-PA2 Programování a algoritmizace 2</a>      </div>
+      <div class="tagline">
+               </div>
+      <div class="pagename">
+        [[<a href="/courses/BI-PA2/lectures/01/start?do=backlink" >lectures:01:start</a>]]
+      </div>
+
+      <div class="clearer"></div>
+    </div>
+
+    
+    <div class="bar" id="bar__top">
+      <div class="bar-left" id="bar__topleft">
+        <form class="button btn_show" method="get" action="/courses/BI-PA2/lectures/01/start"><div class="no"><input type="hidden" name="do" value="show" /><input type="submit" value="Zobrazit stránku" class="button" accesskey="v" title="Zobrazit stránku [V]" /></div></form>        <form class="button btn_revs" method="get" action="/courses/BI-PA2/lectures/01/start"><div class="no"><input type="hidden" name="do" value="revisions" /><input type="submit" value="Starší verze" class="button" accesskey="o" title="Starší verze [O]" /></div></form>      </div>
+
+      <div class="bar-right" id="bar__topright">
+        <form class="button btn_recent" method="get" action="/courses/BI-PA2/lectures/01/start"><div class="no"><input type="hidden" name="do" value="recent" /><input type="submit" value="Poslední úpravy" class="button" accesskey="r" title="Poslední úpravy [R]" /></div></form>        <form action="/courses/BI-PA2/" accept-charset="utf-8" class="search" id="dw__search"><div class="no"><input type="hidden" name="do" value="search" /><input type="text" id="qsearch__in" accesskey="f" name="id" class="edit" title="[F]" /><input type="submit" value="Hledat" class="button" title="Hledat" /><div id="qsearch__out" class="ajax_qsearch JSpopup"></div></div></form>&nbsp;
+	
+	<script src="/lib/scripts/integration_button.js" type="text/javascript"></script>
+	<script type="text/javascript">/*<![CDATA[*/
+		jQuery(document).ready(function () {
+			//jQuery('.btn_integrationButton input[type="submit"]').integrationButton({
+			jQuery('.integration-button').integrationButton({
+		                dataUrl: 'https://ict.fit.cvut.cz/integration/edux.jsonp',
+                		locale: "cs"
+			});
+        	});
+	/*!]]>*/</script>
+	<div class="abutton integration-button"></div>
+        <form class="button btn_logout" method="get" action="/courses/BI-PA2/lectures/01/start"><div class="no"><input type="hidden" name="do" value="logout" /><input type="hidden" name="sectok" value="d5e02f899bb178ece5fc94d35f7ee4a7" /><input type="submit" value="Odhlásit se" class="button" title="Odhlásit se" /></div></form>      </div>
+
+      <div class="clearer"></div>
+    </div>
+
+        <div class="breadcrumbs">
+      <span class="bchead">Umístění: </span><a href="/courses/BI-PA2/start"  title="start">BI-PA2 - Programování a algoritmizace 2</a> &raquo; <a href="/courses/BI-PA2/lectures/start"  title="lectures:start">Přednášky</a> &raquo; <a href="/courses/BI-PA2/lectures/01/start"  title="lectures:01:start">1. Jazyk C++, některá rozšíření oproti C</a>    </div>
+    
+  </div>
+  
+  
+      <div class="page">
+  
+
+    <!-- wikipage start -->
+    
+
+
+
+
+<h1><a name="starsi_verze" id="starsi_verze">Starší verze</a></h1>
+<div class="level1">
+
+<p>
+
+Zde jsou starší verze daného dokumentu. Pro návrat ke starší verzi si ji zvolte ze seznamu níže, stiskněte tlačítko <code>Upravit stránku</code> a uložte ji.
+</p>
+
+</div>
+<form id="page__revisions" method="post" action="" accept-charset="utf-8"><div class="no">
+<input type="hidden" name="sectok" value="d5e02f899bb178ece5fc94d35f7ee4a7" /><ul >
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="current" />
+<span class="date" >
+2017/01/31 18:09</span>
+<img src="/courses/BI-PA2/lib/images/blank.gif" width="15" height="11" alt="" />
+<a class="wikilink1" href="/courses/BI-PA2/lectures/01/start" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+vogeljos</span>
+(aktuální)</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1485882442" />
+<span class="date" >
+2017/01/31 18:07</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1485882442&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1485882442" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+vogeljos</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1485861739" />
+<span class="date" >
+2017/01/31 12:22</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1485861739&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1485861739" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; upraveno mimo DokuWiki</span>
+<span class="user" >
+127.0.0.1</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1456087220" />
+<span class="date" >
+2016/02/21 21:40</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1456087220&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1456087220" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+xvagner</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1456087159" />
+<span class="date" >
+2016/02/21 21:39</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1456087159&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1456087159" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+xvagner</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1456087130" />
+<span class="date" >
+2016/02/21 21:38</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1456087130&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1456087130" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+xvagner</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1456087104" />
+<span class="date" >
+2016/02/21 21:38</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1456087104&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1456087104" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+xvagner</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1370347430" />
+<span class="date" >
+2013/06/04 14:03</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1370347430&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1370347430" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+vogeljos</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1349790975" />
+<span class="date" >
+2012/10/09 15:56</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1349790975&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1349790975" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; upraveno mimo DokuWiki</span>
+<span class="user" >
+127.0.0.1</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1318348748" />
+<span class="date" >
+2011/10/11 17:59</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1318348748&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1318348748" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+vogeljos</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1318348564" />
+<span class="date" >
+2011/10/11 17:56</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1318348564&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1318348564" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+vogeljos</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1318348373" />
+<span class="date" >
+2011/10/11 17:52</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1318348373&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1318348373" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+vogeljos</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1267025041" />
+<span class="date" >
+2010/02/24 16:24</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1267025041&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1267025041" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+muller</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1266159659" />
+<span class="date" >
+2010/02/14 16:00</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266159659&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266159659" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+muller</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1266159341" />
+<span class="date" >
+2010/02/14 15:55</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266159341&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266159341" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+muller</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1266158784" />
+<span class="date" >
+2010/02/14 15:46</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266158784&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266158784" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+muller</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1266158727" />
+<span class="date" >
+2010/02/14 15:45</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266158727&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266158727" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+muller</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1266103864" />
+<span class="date" >
+2010/02/14 00:31</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266103864&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266103864" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+barinkl</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1266103851" />
+<span class="date" >
+2010/02/14 00:30</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266103851&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266103851" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+barinkl</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1266103830" />
+<span class="date" >
+2010/02/14 00:30</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266103830&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266103830" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+barinkl</span>
+</div>
+</li>
+<li >
+<div class="li" >
+<input type="checkbox" name="rev2[]" value="1266103802" />
+<span class="date" >
+2010/02/14 00:30</span>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266103802&amp;do=diff" class="diff_link" >
+<img src="/courses/BI-PA2/lib/images/diff.png" width="15" height="11" title="zobrazit rozdíly vůči aktuální verzi" alt="zobrazit rozdíly vůči aktuální verzi" />
+</a>
+<a href="/courses/BI-PA2/lectures/01/start?rev=1266103802" class="wikilink1" >
+lectures:01:start</a>
+<span class="sum" >
+ &ndash; </span>
+<span class="user" >
+barinkl</span>
+</div>
+</li>
+</ul>
+<input name="do[diff]" type="submit" value="zobrazit rozdíly mezi vybranými verzemi" class="button" />
+</div></form>
+<div class="pagenav"><div class="pagenav-next"><form class="button btn_older" method="get" action="/courses/BI-PA2/lectures/01/start"><div class="no"><input type="hidden" name="do" value="revisions" /><input type="hidden" name="first" value="20" /><input type="submit" value="starší &gt;&gt;" class="button" accesskey="n" title="starší &gt;&gt; [N]" /></div></form></div></div>
+    <!-- wikipage stop -->
+  </div>
+
+  <div class="clearer">&nbsp;</div>
+
+  
+  <div class="stylefoot">
+
+    <div class="meta">
+      <div class="doc">
+        /mnt/www/courses/BI-PA2/data/pages/lectures/01/start.txt &middot; Poslední úprava: 2017/01/31 18:09 autor: vogeljos      </div>
+    </div>
+
+   
+    <div class="bar" id="bar__bottom">
+      <div class="bar-left" id="bar__bottomleft">
+        <form class="button btn_show" method="get" action="/courses/BI-PA2/lectures/01/start"><div class="no"><input type="hidden" name="do" value="show" /><input type="submit" value="Zobrazit stránku" class="button" accesskey="v" title="Zobrazit stránku [V]" /></div></form>        <form class="button btn_revs" method="get" action="/courses/BI-PA2/lectures/01/start"><div class="no"><input type="hidden" name="do" value="revisions" /><input type="submit" value="Starší verze" class="button" accesskey="o" title="Starší verze [O]" /></div></form>      </div>
+      <div class="bar-right" id="bar__bottomright">
+                        <form class="button btn_profile" method="get" action="/courses/BI-PA2/lectures/01/start"><div class="no"><input type="hidden" name="do" value="profile" /><input type="submit" value="Upravit profil" class="button" title="Upravit profil" /></div></form>        <form class="button btn_logout" method="get" action="/courses/BI-PA2/lectures/01/start"><div class="no"><input type="hidden" name="do" value="logout" /><input type="hidden" name="sectok" value="d5e02f899bb178ece5fc94d35f7ee4a7" /><input type="submit" value="Odhlásit se" class="button" title="Odhlásit se" /></div></form>        <form class="button btn_index" method="get" action="/courses/BI-PA2/lectures/01/start"><div class="no"><input type="hidden" name="do" value="index" /><input type="submit" value="Index" class="button" accesskey="x" title="Index [X]" /></div></form>        <a class="nolink" href="#dokuwiki__top"><input type="button" class="button" value="Nahoru" onclick="window.scrollTo(0, 0)" title="Nahoru" /></a>&nbsp;
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="footerinc">
+
+  <a target="_blank" href="/courses/BI-PA2/feed.php" title="Recent changes RSS feed"><img src="/courses/BI-PA2/lib/tpl/edux/images/button-rss.png" width="80" height="15" alt="Recent changes RSS feed" /></a>
+
+  <!-- <a target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/2.0/" rel="license" title="Creative Commons License"><img src="/courses/BI-PA2/lib/tpl/edux/images/button-cc.gif" width="80" height="15" alt="Creative Commons License" /></a> -->
+
+  <!-- <a target="_blank" href="https://www.paypal.com/xclick/business=andi%40splitbrain.org&amp;item_name=DokuWiki+Donation&amp;no_shipping=1&amp;no_note=1&amp;tax=0&amp;currency_code=EUR&amp;lc=US" title="Donate"><img src="/courses/BI-PA2/lib/tpl/edux/images/button-donate.gif" alt="Donate" width="80" height="15" /></a>-->
+
+  <a target="_blank" href="http://www.php.net" title="Powered by PHP"><img src="/courses/BI-PA2/lib/tpl/edux/images/button-php.gif" width="80" height="15" alt="Powered by PHP" /></a>
+
+  <a target="_blank" href="http://validator.w3.org/check/referer" title="Valid XHTML 1.0"><img src="/courses/BI-PA2/lib/tpl/edux/images/button-xhtml.png" width="80" height="15" alt="Valid XHTML 1.0" /></a>
+
+  <a target="_blank" href="http://jigsaw.w3.org/css-validator/check/referer" title="Valid CSS"><img src="/courses/BI-PA2/lib/tpl/edux/images/button-css.png" width="80" height="15" alt="Valid CSS" /></a>
+
+  <a target="_blank" href="http://wiki.splitbrain.org/wiki:dokuwiki" title="Driven by DokuWiki"><img src="/courses/BI-PA2/lib/tpl/edux/images/button-dw.png" width="80" height="15" alt="Driven by DokuWiki" /></a>
+
+
+
+<!--
+
+<rdf:RDF xmlns="http://web.resource.org/cc/"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<Work rdf:about="">
+   <dc:type rdf:resource="http://purl.org/dc/dcmitype/Text" />
+   <license rdf:resource="http://creativecommons.org/licenses/by-nc-sa/2.0/" />
+</Work>
+
+<License rdf:about="http://creativecommons.org/licenses/by-nc-sa/2.0/">
+   <permits rdf:resource="http://web.resource.org/cc/Reproduction" />
+   <permits rdf:resource="http://web.resource.org/cc/Distribution" />
+   <requires rdf:resource="http://web.resource.org/cc/Notice" />
+   <requires rdf:resource="http://web.resource.org/cc/Attribution" />
+   <prohibits rdf:resource="http://web.resource.org/cc/CommercialUse" />
+   <permits rdf:resource="http://web.resource.org/cc/DerivativeWorks" />
+   <requires rdf:resource="http://web.resource.org/cc/ShareAlike" />
+</License>
+
+</rdf:RDF>
+
+-->
+
+
+</div>
+
+<div class="no"><img src="/courses/BI-PA2/lib/exe/indexer.php?id=lectures%3A01%3Astart&amp;1486585272" width="1" height="1" alt=""  /></div>
+</body>
+</html>
