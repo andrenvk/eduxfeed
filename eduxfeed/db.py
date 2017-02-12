@@ -21,6 +21,7 @@ EDUX = {
     'authors': 'authors' + EXT,
 }
 OPEN = {
+    # encoding must be set
     'encoding': 'utf-8',
     'newline': '\n',
 }
@@ -36,7 +37,7 @@ def _configparser(case_sensitive=True):
 def _getter(path):
     config = _configparser()
     # ok if config file does not exist
-    config.read(path)
+    config.read(path, encoding=OPEN['encoding'])
 
     # return dict(config.items())
     # behaves like dict
@@ -102,6 +103,7 @@ def user_list():
     files = [f for f in os.listdir(BASE['user']) if os.path.isfile(os.path.join(BASE['user'], f))]
     # accept just <username>.txt, ignore .dotfiles and user-specific files like <username>_feed.p
     users = [f.split(EXT)[0] for f in files if not (re.search('_', f) or re.match('\.', f))]
+    users = [u for u in users if re.match('^[a-z0-9]$', u)]
 
     return users
 
