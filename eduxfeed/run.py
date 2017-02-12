@@ -11,12 +11,36 @@ import click
 
 
 @click.command()
-@click.option('--check',  is_flag=True, default=False, help='Check config')
-@click.option('--init',   is_flag=True, default=False, help='Init database')
-@click.option('--run',    is_flag=True, default=False, help='Start the webapp')
-@click.option('--all',    is_flag=True, default=False, help='Do steps check-init-run')
-@click.option('--force',  is_flag=True, default=False, help='Force option even if check fails')
-@click.option('--update', is_flag=True, default=False, help='Update database; to be run regularly')
+@click.option(
+    '--check',
+    help='Check config',
+    is_flag=True, default=False,
+)
+@click.option(
+    '--init',
+    help='Init database',
+    is_flag=True, default=False,
+)
+@click.option(
+    '--run',
+    help='Start the webapp',
+    is_flag=True, default=False,
+)
+@click.option(
+    '--all',
+    help='Do steps check-init-run',
+    is_flag=True, default=False,
+)
+@click.option(
+    '--force',
+    help='Force option even if check fails',
+    is_flag=True, default=False,
+)
+@click.option(
+    '--update',
+    help='Update database; to be run regularly',
+    is_flag=True, default=False,
+)
 def run(check, init, run, all, force, update):
     if not (check or init or run or all or update):
         print('Run with --help to see options')

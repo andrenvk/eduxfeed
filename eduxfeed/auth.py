@@ -13,6 +13,22 @@ EDUX = 'https://edux.fit.cvut.cz'
 
 
 def auth(target=None, file=None):
+    """
+    Parses config file containing credentials
+
+    If target is not set, it only checks if auth file exists.
+
+    If file is not set, file path is read from env variable AUTH_FILE,
+    otherwise defaults to 'auth.cfg' in current directory.
+
+    Args:
+        target (str): config file section
+        file (str): config file path
+
+    Returns:
+        credentials (tuple): username and password (strings), possibly other values if present
+    """
+
     if file is None:
         file = AUTH_FILE
     if target is None:
@@ -31,6 +47,7 @@ def auth(target=None, file=None):
         with open(os.path.join(os.path.dirname(__file__), 'auth.cfg.sample')) as f:
             print('Make sure the credentials are valid.')
             print('See below sample contents of auth.cfg:')
+            print()
             print(f.read())
         # raising exception because file was set ok, but is missing auth info
         # it is not clear in advance which auth sections will be used
@@ -43,6 +60,20 @@ def auth(target=None, file=None):
 
 
 def session_edux(username=None, password=None):
+    """
+    Creates authenticated EDUX session
+
+    If username and/or password is missing,
+    it tries to get it from :func:`auth` (target='edux').
+
+    Args:
+        username (str): CTU username
+        password (str): CTU password
+
+    Returns:
+        session (obj): authenticated EDUX session
+    """
+
     if username is None or password is None:
         username, password = auth(target='edux')
     url = EDUX + '/start?do=login'
@@ -85,6 +116,20 @@ def session_edux(username=None, password=None):
 
 
 def session_api(username=None, password=None):
+    """
+    Creates authenticated API session
+
+    If username and/or password is missing,
+    it tries to get it from :func:`auth` (target='api')
+
+    Args:
+        username (str): CTU username
+        password (str): CTU password
+
+    Returns:
+        session (obj): authenticated API session
+    """
+
     if username is None or password is None:
         username, password = auth(target='api')
     url = AUTH + '/oauth/oauth/token'

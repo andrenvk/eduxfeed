@@ -16,11 +16,13 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
+    """Web app, home route, displays login screen"""
     return render_template('oauth.html', url=url_for('oauth'))
 
 
 @app.route('/authorize/redirect')
 def oauth():
+    """Web app, login 1st step, redirects to auth server"""
     username, _, callback = auth(target='oauth')
     url = AUTH + '/oauth/authorize'
     params = {
@@ -34,6 +36,7 @@ def oauth():
 
 @app.route('/authorize')
 def authorize():
+    """Web app, login 2nd step, auth server callbacks the app"""
     query = request.args.to_dict()
     if 'code' not in query:
         return redirect(url_for('index'))
@@ -66,6 +69,7 @@ def authorize():
 
 @app.route('/app/<username>')
 def settings(username):
+    """Web app, user settings, key required in url"""
     query = request.args.to_dict()
     if not user_exist(username):
         abort(400)
@@ -86,6 +90,7 @@ def settings(username):
 
 @app.route('/app/<username>/update', methods=['POST'])
 def update(username):
+    """Web app, user settings endpoint, settings updated upon call"""
     if not user_exist(username):
         abort(400)
 
@@ -105,6 +110,7 @@ def update(username):
 
 @app.route('/app/<username>/feed.xml')
 def feed(username):
+    """Web app, feed output, atom format"""
     query = request.args.to_dict()
     if not user_exist(username):
         abort(400)
@@ -133,6 +139,7 @@ def feed(username):
 
 @app.route('/app/<username>/read')
 def read(username):
+    """Web app, read feed item, gets processed and redirects to EDUX"""
     query = request.args.to_dict()
     if not user_exist(username):
         abort(400)
@@ -162,6 +169,7 @@ def read(username):
 
 @app.template_filter('path')
 def filter_path(path):
+    """Web app, feed template, path filter"""
     path = re.sub('/(start)?$', '', path)
     path = re.sub('^[^/]+(/_media)?/', '', path)
     # if root namespace, then 'code' remains:
@@ -176,11 +184,13 @@ def filter_path(path):
 
 @app.template_filter('updated')
 def filter_updated(timestamp):
+    """Web app, feed template, time in xsd:dateTime format"""
     return datetime.fromtimestamp(int(timestamp)).strftime('%Y-%m-%dT%H:%M:%S')
 
 
 @app.template_filter('uniq')
 def filter_uniq(item):
+    """Web app, feed template, creates unique item id"""
     detail = item['item']
     args = (item['code'], item['path'], str(detail['from']), str(detail['to']))
 
@@ -189,6 +199,7 @@ def filter_uniq(item):
 
 @app.template_filter('author')
 def filter_author(detail):
+    """Web app, feed template, additional info: author"""
     info = detail['info']
     if 'first' in info and 'last' in info:
         author = '{} {}'.format(info['first'], info['last'])
@@ -202,6 +213,7 @@ def filter_author(detail):
 
 @app.template_filter('time')
 def filter_time(detail):
+    """Web app, feed template, additional info: time"""
     time = detail['time']
     datetime = '{} {}'.format(time['date'], time['time'])
 
@@ -210,6 +222,7 @@ def filter_time(detail):
 
 @app.template_filter('size')
 def filter_size(detail):
+    """Web app, feed template, additional info: (file) size"""
     info = detail['info']
     size = '{} {}'.format(info['size'], info['unit'])
 
@@ -218,11 +231,13 @@ def filter_size(detail):
 
 @app.template_filter('sort')
 def filter_sort(details):
+    """Web app, feed template, sort edits in history"""
     return sorted(details)
 
 
 @app.template_filter('link')
 def filter_link(item, username, target=None, escape=True):
+    """Web app, feed template, creates item link (to be later processed by the app)"""
     params = [
         # preserve order
         ('src', item['src']),

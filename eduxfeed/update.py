@@ -25,6 +25,15 @@ FEED_PARAMS = {
 
 
 def update():
+    """
+    Performs database update
+
+    Can be run independently of the web app.
+    Checks for EDUX changes and updates user feeds with new items.
+
+    Args:
+        None
+    """
     session = session_edux()
     changes = edux_check(session)
     pages = db.edux_pages()
@@ -82,6 +91,17 @@ def update():
 
 
 def edux_check(session):
+    """
+    Checks EDUX for changes
+
+    Finds updates to pages and files.
+
+    Args:
+        session (obj): authenticated EDUX session
+
+    Returns:
+        changes (dict): changes found on EDUX (since last update)
+    """
     changes = {
         'pages': {},
         'media': {},
@@ -107,6 +127,20 @@ def edux_check(session):
 
 
 def edux_check_pages(course, session, authors, timestamp):
+    """
+    Checks EDUX pages
+
+    Finds updates to pages, specifically.
+
+    Args:
+        course (str): course code
+        session (obj): authenticated EDUX session
+        authors (dict-like): username to real name, see :func:`.api.edux_author`
+        timestamp (int): last known timestamp for given course
+
+    Returns:
+        items (dict): found updates
+    """
     try:
         r = session.get(FEED.format(course=course), params=FEED_PARAMS)
         r.raise_for_status()
@@ -181,6 +215,18 @@ def edux_check_pages(course, session, authors, timestamp):
 
 
 def edux_check_media(course, session):
+    """
+    Checks EDUX media
+
+    Finds updates to files, specifically.
+
+    Args:
+        course (str): course code
+        session (obj): authenticated EDUX session
+
+    Returns:
+        items (dict): found updates
+    """
     items = {}
     media = db.edux_media(course)
     ajax = AJAX.format(course=course)
@@ -248,6 +294,20 @@ def edux_check_media(course, session):
 
 
 def edux_page_prev(path, session, timestamp):
+    """
+    Finds previous revision of an EDUX page
+
+    On the revision page, selects the most recent
+    revision satisfying (revision <= timestamp).
+
+    Args:
+        path (str): determines the EDUX page
+        session (obj): authenticated EDUX session
+        timestamp (int): timestamp of last known change
+
+    Returns:
+        revision (int): timestamp of the revision
+    """
     url = '{edux}/courses/{path}?do=revisions'
     try:
         r = session.get(url.format(edux=EDUX, path=path))
@@ -273,6 +333,15 @@ def edux_page_prev(path, session, timestamp):
 
 
 def edux_feed_last(feed):
+    """
+    Finds the most recent item of an EDUX feed
+
+    Args:
+        feed (str): feed xml markup
+
+    Returns:
+        timestamp (int): newest timestamp, 0 if none
+    """
     parser = BeautifulSoup(feed, 'html.parser')
     try:
         # sorted from newest

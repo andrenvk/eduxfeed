@@ -10,6 +10,16 @@ from bs4 import BeautifulSoup
 
 
 def init():
+    """
+    Initializes database
+
+    To be run only once at the very beginning.
+    Gets a list of EDUX courses and for each course
+    saves its current state (last page update and list of files).
+
+    Args:
+        None
+    """
     db.init()
     courses = edux_courses()
     session = session_edux()
@@ -18,7 +28,18 @@ def init():
 
 
 def edux_courses():
-    # must not be authenticated
+    """
+    Gets a list of EDUX courses
+
+    Parses the courses from EDUX home webpage,
+    the agent must not be authenticated.
+
+    Args:
+        None
+
+    Returns:
+        courses (list): list of course codes
+    """
     r = requests.get(EDUX)
     parser = BeautifulSoup(r.text, 'html.parser')
 
@@ -37,6 +58,16 @@ def edux_courses():
 
 
 def edux_init_pages(courses, session):
+    """
+    Initialize state of EDUX course pages
+
+    Utilizes :func:`.update.edux_check_pages` to get the
+    last timestamp from the course feed on EDUX.
+
+    Args:
+        courses (list): list of course codes
+        session (obj): authenticated EDUX session
+    """
     pages = db.edux_pages()
     pages['COURSES'] = {}
     for course in courses:
@@ -49,6 +80,16 @@ def edux_init_pages(courses, session):
 
 
 def edux_init_media(courses, session):
+    """
+    Initialize state of EDUX course files
+
+    Utilizes :func:`.update.edux_check_media` to get the
+    list of files uploaded to the course on EDUX.
+
+    Args:
+        courses (list): list of course codes
+        session (obj): authenticated EDUX session
+    """
     for course in courses:
         print('MEDIA', course)
         media = db.edux_media(course)

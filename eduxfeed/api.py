@@ -11,6 +11,17 @@ KOSAPI = API + '/api/3'
 
 
 def edux_author(username, session=None):
+    """
+    Retrieves real name from username using Usermap API
+
+    Args:
+        username (str): CTU username
+        session (obj): authenticated API session (if available)
+
+    Returns:
+        name (dict): name and surname (dict keys 'first' and 'last'), None if not available
+    """
+
     if not session:
         session = session_api()
 
@@ -31,6 +42,17 @@ def edux_author(username, session=None):
 
 
 def user_enrolled(username, session=None):
+    """
+    Retrieves currently enrolled courses of a student using KOS API
+
+    Args:
+        username (str): CTU username
+        session (obj): authenticated API session (if available)
+
+    Returns:
+        courses (list): list of course codes (e.g. MI-PYT), None if not available
+    """
+
     if not session:
         session = session_api()
 
