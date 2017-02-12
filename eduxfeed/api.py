@@ -19,8 +19,8 @@ def edux_author(username, session=None):
         r.raise_for_status()
         json = r.json()
         name = {
-            'first': json['firstName'],
-            'last': json['lastName'],
+            'first': json['firstName'].split(' ')[0],
+            'last': json['lastName'].split(' ')[-1],
         }
     except:
         # caller has to resolve if no response
