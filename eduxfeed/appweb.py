@@ -8,7 +8,6 @@ import re
 from datetime import datetime
 
 import requests
-from jinja2 import Markup
 from flask import Flask, render_template, url_for, request, redirect, abort
 
 
@@ -239,10 +238,10 @@ def filter_link(item, username, target=None, escape=True):
     # requests performs url encoding, '/' => %2F
     # create url manually, http://stackoverflow.com/a/23497903
     # req = requests.Request('GET', url_for('read', username=username, _external=True), params=params)
-    # return Markup(req.prepare().url)
+    # return req.prepare().url
 
     # '&' apperently breaks feed
     amp = '&amp;' if escape else '&'
     params = amp.join(['='.join(param) for param in params])
     url = url_for('read', username=username, _external=True)
-    return Markup('{}?{}'.format(url, params))
+    return '{}?{}'.format(url, params)

@@ -8,7 +8,7 @@
     <title>{{ item.code }}: {{ item.path | path }}</title>
     <id>{{ item | uniq }}</id>
     <updated>{{ item.item.to | updated }}</updated>
-    <link rel="alternate" type="text/html" href="{{ item | link(username) }}"/>
+    <link rel="alternate" type="text/html" href="{{ item | link(username) | safe }}"/>
     <author><name>{{ item.item.updates[item.item.to] | author | e }}</name></author>
     <content type="html">
         &lt;p&gt;
@@ -35,10 +35,10 @@
         &lt;/i&gt;&lt;/p&gt;
         
         &lt;p&gt;
-            &lt;a href=&quot;{{ item | link(username, target='current') }}&quot;&gt;Open current version&lt;/a&gt;
+            &lt;a href=&quot;{{ item | link(username, target='current') | safe }}&quot;&gt;Open current version&lt;/a&gt;
         {% if item.src == 'pages' %}
             &lt;br&gt;
-            &lt;a href=&quot;{{ item | link(username, target='compare') }}&quot;&gt;See the changes&lt;/a&gt;
+            &lt;a href=&quot;{{ item | link(username, target='compare') | safe }}&quot;&gt;See the changes&lt;/a&gt;
         {% endif %}
         &lt;/p&gt;
     </content>
