@@ -127,7 +127,7 @@ def edux_check_pages(course, session, authors, timestamp):
         # sorted from newest (thus, highest timestamp)
         # https://www.dokuwiki.org/syndication#item_sorting
         link = entry.link['href']
-        rev = int(re.search('\?.*rev=(\d+)', link).group(1))
+        rev = int(re.search('\?(.+&)?rev=(\d+)', link).group(2))
         if not rev > timestamp:
             break
         link = re.sub('^.*?/courses/', EDUX + '/courses/', link)
@@ -135,7 +135,10 @@ def edux_check_pages(course, session, authors, timestamp):
         path = re.sub('\?.*$', '', path)
         # course code has to be present
         # e.g. PDD.16 redirects to PDD, thus different code and start of path
-        if re.match('[^/]+/classification/student/', path) or re.match('[^/]+/student/', path):
+        if (re.match('[^/]+/classification/(en/)?student/', path) or
+            re.match('[^/]+/classification/view/', path) or
+            re.match('[^/]+/(en/)?student/', path)):
+            # PEP 8 inconclusive about this indent
             continue
 
         items[rev] = {}
@@ -215,7 +218,7 @@ def edux_check_media(course, session):
             # link to full -- compatibility with pages
             link = re.sub('^.*?/courses/', EDUX + '/courses/', link)
             path = re.sub('^.*?/courses/', '', link)
-            if re.match('[^/]+/_media/student/', path):
+            if re.match('[^/]+/_media/(en/)?student/', path):
                 continue
             info = div.span.i
             date, time = info.text.replace('/', '-').split(' ')
@@ -275,7 +278,7 @@ def edux_feed_last(feed):
         # sorted from newest
         # https://www.dokuwiki.org/syndication#item_sorting
         link = parser.entry.link['href']
-        rev = re.search('\?.*rev=(\d+)', link).group(1)
+        rev = re.search('\?(.+&)?rev=(\d+)', link).group(2)
         return int(rev)
     except:
         return 0
