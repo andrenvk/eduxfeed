@@ -7,8 +7,8 @@ with open('README.rst') as f:
 
 setup(
     name='eduxfeed',
-    version='0.1.0',
-    description='eduxfeed keeps you up to date with edux',
+    version='0.1.1',
+    description='Keeps you up to date with EDUX',
     long_description=long_description,
     author='Ondrej Novak',
     author_email='novako20@fit.cvut.cz',
