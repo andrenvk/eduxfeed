@@ -118,7 +118,7 @@ def user_list():
     files = [f for f in os.listdir(BASE['user']) if os.path.isfile(os.path.join(BASE['user'], f))]
     # accept just <username>.txt, ignore .dotfiles and user-specific files like <username>_feed.p
     users = [f.split(EXT)[0] for f in files if not (re.search('_', f) or re.match('\.', f))]
-    users = [u for u in users if re.match('^[a-z0-9]$', u)]
+    users = [u for u in users if re.match('^[a-z0-9]+$', u)]
 
     return users
 
