@@ -42,17 +42,15 @@ def authorize():
         return redirect(url_for('index'))
 
     username, password, callback = auth(target='oauth')
-    url = AUTH + '/oauth/oauth/token'
+    url = AUTH + '/oauth/token'
     data = {
         'code': query['code'],
-        'client_id': username,
-        'client_secret': password,
         'redirect_uri': callback,
         'grant_type': 'authorization_code',
     }
 
     try:
-        r = requests.post(url, data=data)
+        r = requests.post(url, data=data, auth=(username, password))
         r.raise_for_status()
         token = r.json()['access_token']
         token_info = AUTH + '/oauth/check_token'

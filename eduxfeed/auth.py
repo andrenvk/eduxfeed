@@ -132,17 +132,15 @@ def session_api(username=None, password=None):
 
     if username is None or password is None:
         username, password = auth(target='api')
-    url = AUTH + '/oauth/oauth/token'
+    url = AUTH + '/oauth/token'
     session = requests.Session()
 
     data = {
-        'client_id': username,
-        'client_secret': password,
         'grant_type': 'client_credentials',
     }
 
     try:
-        r = session.post(url, data=data)
+        r = session.post(url, data=data, auth=(username, password))
         r.raise_for_status()
         response = r.json()
         session.headers['Authorization'] = 'Bearer {}'.format(response['access_token'])
