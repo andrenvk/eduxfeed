@@ -169,8 +169,8 @@ def edux_check_pages(course, session, authors, timestamp):
         path = re.sub('\?.*$', '', path)
         # course code has to be present
         # e.g. PDD.16 redirects to PDD, thus different code and start of path
-        if (re.match('[^/]+/classification/(en/)?student/', path) or
-            re.match('[^/]+/classification/view/', path) or
+        if (re.match('[^/]+/(en/)?classification/student/', path) or
+            re.match('[^/]+/(en/)?classification/view/', path) or
             re.match('[^/]+/(en/)?student/', path)):
             # PEP 8 inconclusive about this indent
             continue

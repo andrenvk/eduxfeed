@@ -376,14 +376,14 @@ def test_item_markread(dict_in, item, dict_out):
     [
         ('MI-PYT/classification', False),
         ('MI-PYT/classification/', False),
-        ('MI-PYT/classification/en', False),
-        ('MI-PYT/classification/en/', False),
+        ('MI-PYT/en/classification', False),
+        ('MI-PYT/en/classification/', False),
         ('MI-PYT/classification/student', False),
         ('MI-PYT/classification/student/', True),
-        ('MI-PYT/classification/en/student', False),
-        ('MI-PYT/classification/en/student/', True),
+        ('MI-PYT/en/classification/student', False),
+        ('MI-PYT/en/classification/student/', True),
         ('MI-PYT/classification/student/username', True),
-        ('MI-PYT/classification/en/student/username/', True),
+        ('MI-PYT/en/classification/student/username/', True),
         ('MI-PYT/classification/view/fulltime', True),
         ('MI-PYT/classification/view/', True),
         ('MI-PYT/classification/view', False),
@@ -392,8 +392,8 @@ def test_item_markread(dict_in, item, dict_out):
         ('classification/student/', True),
         ('/classification/view/', False),
         ('classification/view/', False),
-        ('/classification/en/', False),
-        ('classification/en/', False),
+        ('/en/classification/', False),
+        ('en/classification/', False),
         ('MI-PYT/en', False),
         ('MI-PYT/en/', False),
         ('MI-PYT/student', False),
@@ -412,8 +412,8 @@ def test_item_markread(dict_in, item, dict_out):
 def test_regex_ignored(path, should_match):
     # update according to update.edux_check_pages
     # and possibly update.edux_check_media if different pattern
-    if (re.match('[^/]+/classification/(en/)?student/', path) or
-        re.match('[^/]+/classification/view/', path) or
+    if (re.match('[^/]+/(en/)?classification/student/', path) or
+        re.match('[^/]+/(en/)?classification/view/', path) or
         re.match('[^/]+/(en/)?student/', path)):
         # PEP 8 inconclusive about this indent
         assert should_match

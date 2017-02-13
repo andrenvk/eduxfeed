@@ -147,7 +147,7 @@ def user_update(username, config, courses):
                 for course in feed[src]:
                     delete[course] = []
                     for path in feed[src][course]:
-                        if re.match('[^/]+(/_media)?/en/', path):
+                        if re.match('[^/]+/(_media/)?en/', path):
                             delete[course].append(path)
                 for course in delete:
                     for key in delete[course]:
